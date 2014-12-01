@@ -65,8 +65,8 @@
 using namespace RooFit;
 using namespace RooStats ;
 
-Int_t NCAT = 3;
-TString inDir   = "./Trees/";
+Int_t NCAT = 2;
+TString inDir   = "/afs/cern.ch/user/h/hebda/public/forRadion/limitTrees/v39/v39_fitToMgg_nonresSearch_withKinFit/";
 
 void AddBkgData(RooWorkspace*, int);
 RooAbsPdf* BkgModelFit(RooWorkspace*, int, int);
@@ -78,85 +78,29 @@ Double_t effSigma(TH1 *hist);
 RooArgSet* defineVariables()
 {
   // define variables of the input ntuple
-  RooRealVar* mJJ  = new RooRealVar("mJJ","M(jj)",0,3000,"GeV");
-  RooRealVar* mGG  = new RooRealVar("mGG","M(#gamma#gamma)",100,180,"GeV");
-  RooRealVar* mRad = new RooRealVar("mRad","M(#gamma#gamma jj)",0,1500,"GeV");
-  RooRealVar* pt    = new RooRealVar("pt","p_{T}(jj)",0,3000,"GeV");
-  RooRealVar* pt1   = new RooRealVar("pt1","p_{T}^{1}(jj)",0.0,3000,"GeV");
-  RooRealVar* pt2   = new RooRealVar("pt2","p_{T}^{2}(jj)",0.0,3000,"GeV");
-  RooRealVar* wei   = new RooRealVar("wei","HqT x PUwei",0,100,"");
-  RooRealVar* weiS  = new RooRealVar("weiS","HqT x PUwei",0,1000,"");
-  RooCategory* bJetTagCategory = new RooCategory("bJetTagCategory","event category 4") ;
-  bJetTagCategory->defineType("cat4_0",0);
-  bJetTagCategory->defineType("cat4_1",1);
-  bJetTagCategory->defineType("cat4_2",2);
-  bJetTagCategory->defineType("cat4_3",3);
+  RooRealVar* mJJ  = new RooRealVar("mjj","M(jj)",60,180,"GeV");
+  RooRealVar* mGG  = new RooRealVar("mgg","M(#gamma#gamma)",100,180,"GeV");
+  RooRealVar* mRad = new RooRealVar("mtot","M(#gamma#gamma jj)",0,1500,"GeV");
+  RooRealVar* wei  = new RooRealVar("evWeight","event weight",0,100,"");
+  RooCategory* bJetTagCategory = new RooCategory("cut_based_ct","event category 4") ;
+  bJetTagCategory->defineType("cat0",0);
+  bJetTagCategory->defineType("cat1",1);
+  bJetTagCategory->defineType("cat2",2);
+  bJetTagCategory->defineType("cat3",3);
 
-  RooCategory* catMva = new RooCategory("catMva","MVA event category") ;
-  catMva->defineType("MVAcat_0",0);
-  catMva->defineType("MVAcat_1",1);
-  catMva->defineType("MVAcat_2",2);
-  catMva->defineType("MVAcat_3",3);
-  catMva->defineType("MVAcat_4",4);
-  catMva->defineType("MVAcat_5",5);
-  catMva->defineType("MVAcat_6",6);
-  catMva->defineType("MVAcat_7",7);
-  catMva->defineType("MVAcat_8",8);
-
-
-
-  RooCategory* catjet = new RooCategory("CATJET","event category par Njets") ;
-  catjet->defineType("catjet_0",0);
-  catjet->defineType("catjet_1",1);
-
-  RooCategory* vbftag = new RooCategory("vbfTag","Passed VBF selection") ;
-  vbftag->defineType("vbftag_0",0);
-  vbftag->defineType("vbftag_1",1);
-
-  RooCategory* vhtag = new RooCategory("metTag","Passed VH hadronic selection") ;
-  vhtag->defineType("vhtag_0",0);
-  vhtag->defineType("vhtag_1",1);
-
-  RooCategory* leptag = new RooCategory("lepTag","Passed lepton selection") ;
-  leptag->defineType("leptag_0",0);
-  leptag->defineType("leptag_1",1);
-
-  RooCategory* excltag = new RooCategory("NOEXCLTAG","Passed exclusive selection") ;
-  excltag->defineType("excltag_0",0);
-  excltag->defineType("excltag_1",1);
-
-  RooRealVar* MITBDTG   = new RooRealVar("MITBDTG","MIT BDTG",0.05,1,"");
-  RooRealVar* phomvaid1  = new RooRealVar("phomvaid1","phomvaid 1",-0.3,1,"");
-  RooRealVar* phomvaid2  = new RooRealVar("phomvaid2","phomvaid 2",-0.3,1,"");
-
-  RooArgSet* ntplVars = new RooArgSet(*mGG,*mJJ,*pt,*pt1, *pt2, *bJetTagCategory, *wei, *weiS, *catjet);
-  ntplVars->add(*mRad);
-  ntplVars->add(*vbftag);
-  ntplVars->add(*vhtag);
-  ntplVars->add(*leptag);
-  ntplVars->add(*catMva);
-  ntplVars->add(*MITBDTG);
-  ntplVars->add(*phomvaid1);   
-  ntplVars->add(*phomvaid2);   
+  RooArgSet* ntplVars = new RooArgSet(*mGG,*mJJ,*mRad,*bJetTagCategory, *wei);
    
  
   return ntplVars;
 }
 
 
-void runfits(int cat=0, int modelNum=-1, int inDirNum=0)
+void runfits(int cat=0, int modelNum=-1)
 {
 
   //create truth models
   const int nTruthModels=5;
   RooAbsPdf *MggBkgTruth[nTruthModels] = {0};
-
-  switch(inDirNum){
-  case 0: inDir="/afs/cern.ch/work/h/hebda/HggHbb/ntuples/TreesCS/"; break;
-  case 1: inDir="/afs/cern.ch/work/h/hebda/HggHbb/ntuples/Trees_reg/"; break;
-  case 2: inDir="/afs/cern.ch/work/h/hebda/HggHbb/ntuples/Trees_reg_kinfit/"; break;
-  case 3: inDir="/afs/cern.ch/work/h/hebda/HggHbb/ntuples/Trees_kinfit/"; break;
-  }
 
   TString card_name("hggSM_models_Pol_8TeV.rs");
   HLFactory hlf("HLFactory", card_name, false);
@@ -204,7 +148,7 @@ void AddBkgData(RooWorkspace* w, int cat) {
 // retrieve the data tree;
 // no common preselection cut applied yet; 
 
-  TFile dataFile(inDir+"tree_data_weiMgg.root");   
+  TFile dataFile(inDir+"DataCS_m0.root");   
   TTree* dataTree     = (TTree*) dataFile.Get("Events");
   weightVar.setVal(1.);
   ntplVars->add(RooArgList(weightVar));
