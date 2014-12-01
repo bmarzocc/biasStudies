@@ -22,8 +22,8 @@ int Make(int mode, int cat, int inDirNum=0)
   gROOT->ProcessLine(".L ExpGaussExp.cxx+");
 
   if(mode==2) gROOT->ProcessLine(".L R2GGBBBiasStudy_mjj.cc+");
-  if(mode==1) gROOT->ProcessLine(".L R2GGBBBiasStudy_mgg2.cc+");
-  if(mode==0) gROOT->ProcessLine(".L R2GGBBBiasStudy_mggjj2.cc+");
+  if(mode==1) gROOT->ProcessLine(".L R2GGBBBiasStudy_mgg.cc+");
+  if(mode==0) gROOT->ProcessLine(".L R2GGBBBiasStudy_mggjj.cc+");
 
   if(mode==0){
     //runfits(cat,1,inDirNum);
