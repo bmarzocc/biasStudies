@@ -25,32 +25,14 @@ int Make(int mode, int cat, int inDirNum=0)
   if(mode==1) gROOT->ProcessLine(".L R2GGBBBiasStudy_mgg.cc+");
   if(mode==0) gROOT->ProcessLine(".L R2GGBBBiasStudy_mggjj.cc+");
 
-  if(mode==0){
-    //runfits(cat,1,inDirNum);
-    runfits(cat,1,inDirNum);
-    runfits(cat,2,inDirNum);
-    runfits(cat,3,inDirNum);
-    runfits(cat,4,inDirNum);
-    //runfits(cat,7,inDirNum);
-    //runfits(cat,8,inDirNum);
-    //runfits(cat,5,inDirNum);
-  }
-  else if(mode==1){
-    //    runfits(cat,0,125,inDirNum);
-    for(int M_H=120;M_H<=130;M_H+=5){
-      for(int i=0; i<5; i++){
-	runfits(cat,i,M_H,inDirNum);
-      }
-    }
-  }
-  else{
-    for(int i=0; i<5; i++)
-      runfits(cat,i,inDirNum);
-  }
-
-  //runfits(0);
-  //runfits(1);
-  //runfits(2);
+  runfits(cat);
+  //runfits(cat,1,inDirNum);
+  //runfits(cat,2,inDirNum);
+  //runfits(cat,3,inDirNum);
+  //runfits(cat,4,inDirNum);
+  //runfits(cat,7,inDirNum);
+  //runfits(cat,8,inDirNum);
+  //runfits(cat,5,inDirNum);
 
   return 0;
 
