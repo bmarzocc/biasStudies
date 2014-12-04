@@ -420,12 +420,12 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, FILE *fout){
     RooRealVar *nbkg = new RooRealVar("nbkg","",1,0,100000);
     RooExtendPdf *MggBkgFit = new RooExtendPdf(TString::Format("MggBkgFit_cat%d",c),"",*MggBkgTmp[k],*nbkg);
 
-    RooMCStudy * mcs = new RooMCStudy(*MggBkgTruth, *mGG, FitModel(*MggBkgFit),Silence(), Extended(data->sumEntries()>13.81), Binned(kFALSE),//13.81 corresponds to a mu that gives p(N=0)=0.000001
+    RooMCStudy * mcs = new RooMCStudy(*MggBkgTruth, *mGG, FitModel(*MggBkgFit),Silence(), Extended(kTRUE), Binned(kFALSE),//13.81 corresponds to a mu that gives p(N=0)=0.000001
 				      FitOptions(Range(minMassFit,maxMassFit),Extended(kTRUE),PrintEvalErrors(0), Save()));
     RooChi2MCSModule chi2mod;
     mcs->addModule(chi2mod);
 
-    if(c==2) mcs->generateAndFit(Npse*2,data->sumEntries(),kTRUE);
+    if(c==0) mcs->generateAndFit(Npse*2,data->sumEntries(),kTRUE);
     else mcs->generateAndFit(Npse,data->sumEntries(),kTRUE);
 
     std::vector<double> pulls;
@@ -467,7 +467,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, FILE *fout){
       float fitN = normIntRange->getVal();
       float fitNerr = normIntRange->getPropagatedError(*mcs->fitResult(i));
 
-      cout<<"Pull check (NgenTot, Ngen, Nfit, fitErr, NfitOld, fitErrOld): "<<genDataset->sumEntries()<<' '<<genN<<' '<<fitN<<' '<<fitNerr<<' '<<fitN2*fitFraction<<' '<<fitNerr2<<' '<<endl;
+      //cout<<"Pull check (NgenTot, Ngen, Nfit, fitErr, NfitOld, fitErrOld): "<<genDataset->sumEntries()<<' '<<genN<<' '<<fitN<<' '<<fitNerr<<' '<<fitN2*fitFraction<<' '<<fitNerr2<<' '<<endl;
       if(fitNerr>0)// && mcs->fitParams(i)->getRealValue("chi2")/mcs->fitParams(i)->getRealValue("ndof")<10)
 	pulls.push_back((genN-fitN)/(fitNerr2));
     }
