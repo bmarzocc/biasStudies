@@ -95,7 +95,7 @@ RooArgSet* defineVariables()
 }
 
 
-void runfits(int cat=0, int modelNum=-1)
+void runfits(int cat=0, int modelNum=-1, int inDirNum=0)
 {
 
   //create truth models
@@ -130,9 +130,9 @@ void AddBkgData(RooWorkspace* w, int cat) {
 // common preselection cut
   TString mainCut("1");
   //TString mainCut("mRad>200 && mRad<700 && mJJ>90 && mJJ<170");
-  if(cat==0) mainCut = "60<mJJ && mJJ<180";
-  else if(cat==1) mainCut = "85<mJJ && mJJ<155 && mRad>225 && mRad<290";
-  else if(cat==2) mainCut = "85<mJJ && mJJ<155 && mRad>225 && mRad<290";
+  //if(cat==0) mainCut = "60<mJJ && mJJ<180";
+  //else if(cat==1) mainCut = "85<mJJ && mJJ<155 && mRad>225 && mRad<290";
+  //else if(cat==2) mainCut = "85<mJJ && mJJ<155 && mRad>225 && mRad<290";
 
 //****************************//
 // Signal Data Set
@@ -140,7 +140,7 @@ void AddBkgData(RooWorkspace* w, int cat) {
 
   // Variables
   RooArgSet* ntplVars = defineVariables();
-  RooRealVar weightVar("weightVar","",1,0,1000);
+  RooRealVar weightVar("evWeight","",1,0,1000);
 
 //****************************//
 // CMS Data Set
@@ -149,11 +149,11 @@ void AddBkgData(RooWorkspace* w, int cat) {
 // no common preselection cut applied yet; 
 
   TFile dataFile(inDir+"DataCS_m0.root");   
-  TTree* dataTree     = (TTree*) dataFile.Get("Events");
+  TTree* dataTree     = (TTree*) dataFile.Get("TCVARS");
   weightVar.setVal(1.);
   ntplVars->add(RooArgList(weightVar));
 
-  RooDataSet Data("Data","dataset",dataTree,*ntplVars,"","wei");
+  RooDataSet Data("Data","dataset",dataTree,*ntplVars,"","evWeight");
 
 // apply a common preselection cut;
 // split into NCAT  categories;
@@ -162,12 +162,12 @@ void AddBkgData(RooWorkspace* w, int cat) {
   RooDataSet* dataToFit[9];
   for (int c = 0; c < ncat; ++c) {
 // Real data
-    dataToFit[c]   = (RooDataSet*) Data.reduce(*w->var("mGG"),mainCut+TString::Format(" && bJetTagCategory==%d",c));
+    dataToFit[c]   = (RooDataSet*) Data.reduce(*w->var("mgg"),mainCut+TString::Format(" && cut_based_ct==%d",c));
     w->import(*dataToFit[c],Rename(TString::Format("Data_cat%d",c)));
   }
 
 // Create full data set without categorization
-  RooDataSet* data    = (RooDataSet*) Data.reduce(*w->var("mGG"),mainCut);
+  RooDataSet* data    = (RooDataSet*) Data.reduce(*w->var("mgg"),mainCut);
   w->import(*data, Rename("Data"));
   data->Print("v");
 
@@ -178,9 +178,8 @@ RooAbsPdf *BkgModelFit(RooWorkspace* w, int c, int modelNum) {
 
   std::vector<TString> catdesc;
 
-  catdesc.push_back("#scale[0.8]{Untagged}");
-  catdesc.push_back("#scale[0.8]{1-bjet tagged}");
-  catdesc.push_back("#scale[0.8]{2-bjet tagged}");
+  catdesc.push_back("#scale[0.8]{cat0}");
+  catdesc.push_back("#scale[0.8]{cat1}");
 
   RooDataSet* data[9];
   RooFitResult* fitresult[9];;
@@ -188,7 +187,7 @@ RooAbsPdf *BkgModelFit(RooWorkspace* w, int c, int modelNum) {
 
   Float_t minMassFit(100),maxMassFit(180); 
 
-  RooRealVar* mGG     = w->var("mGG");  
+  RooRealVar* mGG     = w->var("mgg");
   mGG->setUnit("GeV");
   
   TLatex *text = new TLatex();
@@ -370,9 +369,8 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, FILE *fout){
 
   std::vector<TString> catdesc;
 
-  catdesc.push_back("#scale[0.8]{Untagged}");
-  catdesc.push_back("#scale[0.8]{1-bjet tagged}");
-  catdesc.push_back("#scale[0.8]{2-bjet tagged}");
+  catdesc.push_back("#scale[0.8]{cat0}");
+  catdesc.push_back("#scale[0.8]{cat1}");
 
   Float_t minMassFit(100),maxMassFit(180); 
   float sigMean=0, sigFWHM=0;
@@ -382,7 +380,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, FILE *fout){
   case 2: sigMean=124.91; sigFWHM=1.91; break;
   }
 
-  RooRealVar* mGG     = w->var("mGG");  
+  RooRealVar* mGG     = w->var("mgg");  
   mGG->setUnit("GeV");
   mGG->setRange("sigRegion",sigMean-sigFWHM,sigMean+sigFWHM);
   
@@ -422,7 +420,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, FILE *fout){
     RooRealVar *nbkg = new RooRealVar("nbkg","",1,0,100000);
     RooExtendPdf *MggBkgFit = new RooExtendPdf(TString::Format("MggBkgFit_cat%d",c),"",*MggBkgTmp[k],*nbkg);
 
-    RooMCStudy * mcs = new RooMCStudy(*MggBkgTruth, *mGG, FitModel(*MggBkgFit),Silence(), Extended(kTRUE), Binned(kFALSE),
+    RooMCStudy * mcs = new RooMCStudy(*MggBkgTruth, *mGG, FitModel(*MggBkgFit),Silence(), Extended(data->sumEntries()>13.81), Binned(kFALSE),//13.81 corresponds to a mu that gives p(N=0)=0.000001
 				      FitOptions(Range(minMassFit,maxMassFit),Extended(kTRUE),PrintEvalErrors(0), Save()));
     RooChi2MCSModule chi2mod;
     mcs->addModule(chi2mod);
@@ -455,7 +453,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, FILE *fout){
       float fitFraction = fitFunc->createIntegral(*mGG,*mGG,"sigRegion")->getVal();
       //float genN = mcs->fitParams(i)->getRealValue("ngen");
       const RooAbsData* genDataset = mcs->genData(i);
-      char fitRangeString[80]; sprintf(fitRangeString,"mGG>%f && mGG<%f",sigMean-sigFWHM,sigMean+sigFWHM);
+      char fitRangeString[80]; sprintf(fitRangeString,"mgg>%f && mgg<%f",sigMean-sigFWHM,sigMean+sigFWHM);
       float genN = genDataset->sumEntries(fitRangeString);
 
       float fitN2 = mcs->fitParams(i)->getRealValue("nbkg");
@@ -469,9 +467,9 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, FILE *fout){
       float fitN = normIntRange->getVal();
       float fitNerr = normIntRange->getPropagatedError(*mcs->fitResult(i));
 
-      //cout<<"Pull check (NgenTot, Ngen, Nfit, fitErr, NfitOld, fitErrOld): "<<genDataset->sumEntries()<<' '<<genN<<' '<<fitN<<' '<<fitNerr<<' '<<fitN2*fitFraction<<' '<<fitNerr2<<' '<<mcs->fitResult(i)->correlation(*intRange,*nbkg)<<endl;
+      cout<<"Pull check (NgenTot, Ngen, Nfit, fitErr, NfitOld, fitErrOld): "<<genDataset->sumEntries()<<' '<<genN<<' '<<fitN<<' '<<fitNerr<<' '<<fitN2*fitFraction<<' '<<fitNerr2<<' '<<endl;
       if(fitNerr>0)// && mcs->fitParams(i)->getRealValue("chi2")/mcs->fitParams(i)->getRealValue("ndof")<10)
-	pulls.push_back((genN-fitN)/(fitNerr));
+	pulls.push_back((genN-fitN)/(fitNerr2));
     }
 
     for(int i=0; i<pulls.size(); ++i){
