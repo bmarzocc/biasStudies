@@ -60,16 +60,32 @@ mgg_bkg_8TeV_wid3_cat2[0.1,0.0, 100.0];
 mgg_bkg_8TeV_wid4_cat2[0.1,0.0, 100.0];
 mgg_bkg_8TeV_wid5_cat2[0.1,0.0, 100.0];
 
-mgg_bkg_8TeV_slope1[0.1,-100.0, 100.0];
-mgg_bkg_8TeV_slope2[0.1,-100.0, 100.0];
-mgg_bkg_8TeV_slope3[0.1,-100.0, 100.0];
-mgg_bkg_8TeV_slope4[0.1,-100.0, 100.0];
-mgg_bkg_8TeV_slope5[0.1,-100.0, 100.0];
-mgg_bkg_8TeV_arg1[0.1,-100.0, 100.0];
-mgg_bkg_8TeV_arg2[0.1,-100.0, 100.0];
-mgg_bkg_8TeV_arg3[0.1,-100.0, 100.0];
-mgg_bkg_8TeV_arg4[0.1,-100.0, 100.0];
-mgg_bkg_8TeV_arg5[0.1,-100.0, 100.0];
+mgg_bkg_8TeV_slope1_cat3[0.1,-100.0, 100.0];
+mgg_bkg_8TeV_slope2_cat3[0.1,-100.0, 100.0];
+mgg_bkg_8TeV_slope3_cat3[0.1,-100.0, 100.0];
+mgg_bkg_8TeV_slope4_cat3[0.1,-100.0, 100.0];
+mgg_bkg_8TeV_slope5_cat3[0.1,-100.0, 100.0];
+mgg_bkg_8TeV_arg1_cat3[-0.1,-10,0.0];
+mgg_bkg_8TeV_arg2_cat3[-0.1,-10,0.0];
+mgg_bkg_8TeV_arg3_cat3[-0.1,-10,0.0];
+mgg_bkg_8TeV_arg4_cat3[-0.1,-10,0.0];
+mgg_bkg_8TeV_arg5_cat3[-0.1,-10,0.0];
+mgg_bkg_8TeV_wid1_cat3[0.1,0.0, 100.0];
+mgg_bkg_8TeV_wid2_cat3[0.1,0.0, 100.0];
+mgg_bkg_8TeV_wid3_cat3[0.1,0.0, 100.0];
+mgg_bkg_8TeV_wid4_cat3[0.1,0.0, 100.0];
+mgg_bkg_8TeV_wid5_cat3[0.1,0.0, 100.0];
+
+mjj_bkg_8TeV_slope1[0.1,-100.0, 100.0];
+mjj_bkg_8TeV_slope2[0.1,-100.0, 100.0];
+mjj_bkg_8TeV_slope3[0.1,-100.0, 100.0];
+mjj_bkg_8TeV_slope4[0.1,-100.0, 100.0];
+mjj_bkg_8TeV_slope5[0.1,-100.0, 100.0];
+mjj_bkg_8TeV_arg1[0.1,-100.0, 100.0];
+mjj_bkg_8TeV_arg2[0.1,-100.0, 100.0];
+mjj_bkg_8TeV_arg3[0.1,-100.0, 100.0];
+mjj_bkg_8TeV_arg4[0.1,-100.0, 100.0];
+mjj_bkg_8TeV_arg5[0.1,-100.0, 100.0];
 
 mjj_bkg_8TeV_slope1_cat0[0.1,-100.0, 100.0];
 mjj_bkg_8TeV_slope2_cat0[0.1,-100.0, 100.0];
@@ -118,6 +134,22 @@ mjj_bkg_8TeV_wid2_cat2[0.1,0.0, 100.0];
 mjj_bkg_8TeV_wid3_cat2[0.1,0.0, 100.0];
 mjj_bkg_8TeV_wid4_cat2[0.1,0.0, 100.0];
 mjj_bkg_8TeV_wid5_cat2[0.1,0.0, 100.0];
+
+mjj_bkg_8TeV_slope1_cat3[0.1,-100.0, 100.0];
+mjj_bkg_8TeV_slope2_cat3[0.1,-100.0, 100.0];
+mjj_bkg_8TeV_slope3_cat3[0.1,-100.0, 100.0];
+mjj_bkg_8TeV_slope4_cat3[0.1,-100.0, 100.0];
+mjj_bkg_8TeV_slope5_cat3[0.1,-100.0, 100.0];
+mjj_bkg_8TeV_arg1_cat3[-0.1,-10,0.0];
+mjj_bkg_8TeV_arg2_cat3[-0.1,-10,0.0];
+mjj_bkg_8TeV_arg3_cat3[-0.1,-10,0.0];
+mjj_bkg_8TeV_arg4_cat3[-0.1,-10,0.0];
+mjj_bkg_8TeV_arg5_cat3[-0.1,-10,0.0];
+mjj_bkg_8TeV_wid1_cat3[0.1,0.0, 100.0];
+mjj_bkg_8TeV_wid2_cat3[0.1,0.0, 100.0];
+mjj_bkg_8TeV_wid3_cat3[0.1,0.0, 100.0];
+mjj_bkg_8TeV_wid4_cat3[0.1,0.0, 100.0];
+mjj_bkg_8TeV_wid5_cat3[0.1,0.0, 100.0];
 
 
 wei[1,0,10];
