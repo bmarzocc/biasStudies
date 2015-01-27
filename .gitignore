@@ -3,6 +3,8 @@
 *.exe
 *dSYM
 *.pyc
+*.d
+*.so
 
 # ROOT
 *.root
