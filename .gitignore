@@ -1,0 +1,37 @@
+# C++ and compilation
+*.[oa]
+*.exe
+*dSYM
+*.pyc
+
+# ROOT
+*.root
+
+# Text editing
+*~
+*.swp
+
+# Lxplus stuff
+.__afs*
+
+# Original files used to setup the code
+CreateRegressionTMVATree.C
+regressionTMVA.C
+fitMgg.C
+quickPlot.C
+
+# plots & logs
+2013*
+*.pdf
+*.gif
+*.png
+*.ps
+*.eps
+*txt
+*log
+*eo
+test*
+dump*
+*.diff
+plots_*
+cutFlow*
