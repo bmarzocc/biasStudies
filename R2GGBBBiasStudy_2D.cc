@@ -613,7 +613,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
 
   if(MggBkgTruth->GetName()[0]=='B'){
     fprintf(fout,"Mgg x Mjj spectrum, bias results for cat%d\n",c);
-    fprintf(fout,"Model\tExp\tPow\tBer1\tBer2\tBer3\n");
+    fprintf(fout,"Model\t\t\tExp\tPow\tBer1\tBer2\tBer3\n");
   }
 
   RooProdPdf *BkgTruth = new RooProdPdf("BkgTruth","",RooArgList(*MggBkgTruth,*MjjBkgTruth));
@@ -812,7 +812,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
     delete mcs;
   }
 
-  fprintf(fout,"%s,%s\t%8.3f  %8.3f  %8.3f  %8.3f  %8.3f\n",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),results[0],results[1],results[2],results[3],results[4]);
+  fprintf(fout,"%s,%s\t%6.3f\t%6.3f\t%6.3f\t%6.3f\t%6.3f\n",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),results[0],results[1],results[2],results[3],results[4]);
 
   return;
 }
