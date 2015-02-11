@@ -100,7 +100,6 @@ void runfits(int cat=0, int modelNumMgg=0, int modelNumMjj=0, int inDirNum=0)
 {
 
   //create truth models
-  const int nTruthModels=5;
   RooAbsPdf *MggBkgTruth=0;
   RooAbsPdf *MjjBkgTruth=0;
 
@@ -902,4 +901,20 @@ Double_t effSigma(TH1 *hist) {
   if(ierr != 0) std::cout << "effsigma: Error of type " << ierr << std::endl;
 
   return widmin;
+}
+
+int main(int argc, const char* argv[]){
+
+  int cat=0, modelNum1=0, modelNum2=0;
+
+  if (argc>1)
+    cat=atoi(argv[1]);
+  if (argc>2)
+    modelNum1=atoi(argv[2]);
+  if (argc>3)
+    modelNum2=atoi(argv[3]);
+   
+  runfits(cat,modelNum1,modelNum2);
+
+  return 0;
 }
