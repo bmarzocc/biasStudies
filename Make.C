@@ -1,4 +1,4 @@
-int Make(int mode, int cat, int inDirNum=0)
+int Make(int mode, int cat)
 {
   /* find location of include file by issuing
      scramv1 tool info roofitcore
@@ -25,14 +25,13 @@ int Make(int mode, int cat, int inDirNum=0)
   if(mode==1) gROOT->ProcessLine(".L R2GGBBBiasStudy_mgg.cc+");
   if(mode==0) gROOT->ProcessLine(".L R2GGBBBiasStudy_mggjj.cc+");
 
-  runfits(cat);
-  //runfits(cat,1,inDirNum);
-  //runfits(cat,2,inDirNum);
-  //runfits(cat,3,inDirNum);
-  //runfits(cat,4,inDirNum);
-  //runfits(cat,7,inDirNum);
-  //runfits(cat,8,inDirNum);
-  //runfits(cat,5,inDirNum);
+  if(mode!=2)
+    runfits(cat);
+  else{
+    for( int i=0; i<1; i++)
+      for ( int j=0; j<1; j++)
+	runfits(cat,i,j);
+  }
 
   return 0;
 

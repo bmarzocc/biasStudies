@@ -66,7 +66,7 @@ using namespace RooFit;
 using namespace RooStats ;
 
 Int_t NCAT = 2;
-TString inDir   = "/afs/cern.ch/user/h/hebda/public/forRadion/limitTrees/v39/v39_fitTo2D_nonresSearch_withKinFit/";
+TString inDir   = "/afs/cern.ch/work/o/obondu/public/forRadion/limitTrees/v42/v42_fitTo2D_nonresSearch_withKinFit/";
 
 void AddBkgData(RooWorkspace*, int);
 RooAbsPdf* BkgMggModelFit(RooWorkspace*, int, int);
@@ -96,13 +96,13 @@ RooArgSet* defineVariables()
 }
 
 
-void runfits(int cat=0, int modelNum=-1, int inDirNum=0)
+void runfits(int cat=0, int modelNumMgg=0, int modelNumMjj=0, int inDirNum=0)
 {
 
   //create truth models
   const int nTruthModels=5;
-  RooAbsPdf *MggBkgTruth[nTruthModels] = {0};
-  RooAbsPdf *MjjBkgTruth[nTruthModels] = {0};
+  RooAbsPdf *MggBkgTruth=0;
+  RooAbsPdf *MjjBkgTruth=0;
 
   TString card_name("hgghbb_models_Pol_8TeV.rs");
   HLFactory hlf("HLFactory", card_name, false);
@@ -110,19 +110,15 @@ void runfits(int cat=0, int modelNum=-1, int inDirNum=0)
   AddBkgData(w,cat);
 
   FILE *fout = fopen("resultsBias2D.txt","a");
-  if(modelNum<=0) fprintf(fout,"%s\n",inDir.Data());
+  if(modelNumMgg==0 && modelNumMjj ==0) fprintf(fout,"%s\n\n",inDir.Data());
 
-  for(int m=0; m<nTruthModels; ++m) {
-    if(modelNum>=0 && m!=modelNum) continue;
-    if(m==2) continue;//skip Landau, it sucks.
-    MggBkgTruth[m] = BkgMggModelFit(w,cat,m); //Ber, Exp, Lan, Lau, Pow
-    MjjBkgTruth[m] = BkgMjjModelFit(w,cat,m); //Ber, Exp, Lan, Lau, Pow
-    BkgModelBias(w,cat,MggBkgTruth[m],MjjBkgTruth[m],fout);
-  }
+  if(modelNumMgg==2 || modelNumMjj==2) return;//skip Landau, it sucks.
+  MggBkgTruth = BkgMggModelFit(w,cat,modelNumMgg); //Ber, Exp, Lan, Lau, Pow
+  MjjBkgTruth = BkgMjjModelFit(w,cat,modelNumMjj); //Ber, Exp, Lan, Lau, Pow
+  BkgModelBias(w,cat,MggBkgTruth,MjjBkgTruth,fout);
 
-  //Choose suitable combinations of Mgg,Mjj templates
 
-  if(modelNum<0 || modelNum+1==nTruthModels) fprintf(fout,"\n\n");
+  if(modelNumMgg==4 && modelNumMjj==4) fprintf(fout,"\n\n");
   fclose(fout);
   return;
 }
@@ -616,9 +612,8 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
 
 
   if(MggBkgTruth->GetName()[0]=='B'){
-    fprintf(fout,"2D spectrum, bias results for cat%d\n",c);
-    fprintf(fout,"Model\t    %s      %s      %s      %s      %s\n",
-	    MggBkgTmp[0]->GetName(),MggBkgTmp[1]->GetName(),MggBkgTmp[2]->GetName(),MggBkgTmp[3]->GetName(),MggBkgTmp[4]->GetName());
+    fprintf(fout,"Mgg x Mjj spectrum, bias results for cat%d\n",c);
+    fprintf(fout,"Model\tExp\tPow\tBer1\tBer2\tBer3\n");
   }
 
   RooProdPdf *BkgTruth = new RooProdPdf("BkgTruth","",RooArgList(*MggBkgTruth,*MjjBkgTruth));
@@ -817,7 +812,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
     delete mcs;
   }
 
-  fprintf(fout,"%s\t%8.4f  %8.4f  %8.4f  %8.4f  %8.4f\n",MggBkgTruth->GetName(),results[0],results[1],results[2],results[3],results[4]);
+  fprintf(fout,"%s,%s\t%8.3f  %8.3f  %8.3f  %8.3f  %8.3f\n",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),results[0],results[1],results[2],results[3],results[4]);
 
   return;
 }
