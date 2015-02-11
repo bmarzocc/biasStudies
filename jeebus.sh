@@ -11,6 +11,6 @@
 
 #for 2D
 root -l -b -q "Make.C(2,0)"
-#root -l -b -q "Make.C(2,1)"
-#root -l -b -q "Make.C(2,2)"
-#root -l -b -q "Make.C(2,3)"
+root -l -b -q "Make.C(2,1)"
+root -l -b -q "Make.C(2,2)"
+root -l -b -q "Make.C(2,3)"
