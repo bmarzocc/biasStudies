@@ -69,6 +69,8 @@ Int_t NCAT = 4;
 TString inDir   = "/afs/cern.ch/work/o/obondu/public/forRadion/limitTrees/v42/v42_fitTo2D_nonresSearch_withKinFit/";
 
 void AddBkgData(RooWorkspace*, int);
+void AddSigData(RooWorkspace*, int);
+void SigModelFit(RooWorkspace*, int);
 RooAbsPdf* BkgMggModelFit(RooWorkspace*, int, int);
 RooAbsPdf* BkgMjjModelFit(RooWorkspace*, int, int);
 void BkgModelBias(RooWorkspace*,int,RooAbsPdf*,RooAbsPdf*,FILE*);
@@ -110,11 +112,14 @@ void runfits(int cat=0, int modelNumMgg=0, int modelNumMjj=0, int inDirNum=0)
   HLFactory hlf("HLFactory", card_name, false);
   RooWorkspace* w = hlf.GetWs();
   AddBkgData(w,cat);
+  AddSigData(w,cat);
+  SigModelFit(w, cat);
 
   FILE *fout = fopen("resultsBias2D.txt","a");
   //if(modelNumMgg==0 && modelNumMjj ==0) fprintf(fout,"%s\n\n",inDir.Data());
 
   if(modelNumMgg==2 || modelNumMjj==2) return;//skip Landau, it sucks.
+  if(modelNumMgg==3 || modelNumMjj==3) return;//skip Laurent, it sucks.
   MggBkgTruth = BkgMggModelFit(w,cat,modelNumMgg); //Ber, Exp, Lan, Lau, Pow
   MjjBkgTruth = BkgMjjModelFit(w,cat,modelNumMjj); //Ber, Exp, Lan, Lau, Pow
   BkgModelBias(w,cat,MggBkgTruth,MjjBkgTruth,fout);
@@ -175,6 +180,102 @@ void AddBkgData(RooWorkspace* w, int cat) {
   data->Print("v");
 
 }
+
+void AddSigData(RooWorkspace* w, int cat) {
+  const Int_t ncat = NCAT;
+
+  RooArgSet* ntplVars = defineVariables();
+  TFile sigFile(inDir+"ggHH_Lam_1d0_Yt_1d0_c2_0d0_8TeV_m0.root");
+  TTree* sigTree = (TTree*) sigFile.Get("TCVARS");
+  // common preselection cut
+  TString mainCut("1");
+  RooDataSet sigScaled(
+		       "sigScaled",
+		       "dataset",
+		       sigTree,
+		       *ntplVars,
+		       mainCut,
+		       "evWeight");
+
+  RooDataSet* sigToFit[ncat];
+  TString cut0 = " && 1>0";
+  //
+  // we take only mtot to fit to the workspace, we include the cuts
+  for ( int i=0; i<ncat; ++i){
+    sigToFit[i] = (RooDataSet*) sigScaled.reduce(
+						 RooArgList(*w->var("mgg"),*w->var("mjj")),
+						 mainCut+TString::Format(" && cut_based_ct==%d ",i)+cut0);
+    w->import(*sigToFit[i],Rename(TString::Format("Sig_cat%d",i)));
+  }
+  // Create full signal data set without categorization
+  RooDataSet* sigToFitAll = (RooDataSet*) sigScaled.reduce(
+							   RooArgList(*w->var("mgg"),*w->var("mjj")),
+							   mainCut);
+
+  w->import(*sigToFitAll,Rename("Sig"));
+  return;
+} // end add signal function
+
+void SigModelFit(RooWorkspace* w, int cat) {
+  const Int_t ncat = NCAT;
+
+  float MASS=125.03;
+  //******************************************//
+  // Fit signal with model pdfs
+  //******************************************//
+  // four categories to fit
+  RooDataSet* sigToFit[ncat];
+  RooAbsPdf* mggSig[ncat];
+  RooAbsPdf* mjjSig[ncat];
+  RooProdPdf* SigPdf[ncat];
+  // fit range
+  Float_t minSigFitMgg(115),maxSigFitMgg(135);
+  Float_t minSigFitMjj(60),maxSigFitMjj(180);
+  RooRealVar* mgg = w->var("mgg");
+  RooRealVar* mjj = w->var("mjj");
+  mgg->setRange("SigFitRange",minSigFitMgg,maxSigFitMgg);
+  mjj->setRange("SigFitRange",minSigFitMjj,maxSigFitMjj);
+
+  for (int c = 0; c < ncat; ++c) {
+    // import sig and data from workspace
+    sigToFit[c] = (RooDataSet*) w->data(TString::Format("Sig_cat%d",c));
+    mggSig[c] = (RooAbsPdf*) w->pdf(TString::Format("mggSig_cat%d",c));
+    mjjSig[c] = (RooAbsPdf*) w->pdf(TString::Format("mjjSig_cat%d",c));
+    SigPdf[c] = new RooProdPdf(TString::Format("SigPdf_cat%d",c),"",RooArgSet(*mggSig[c], *mjjSig[c]));
+
+    ((RooRealVar*) w->var(TString::Format("mgg_sig_m0_cat%d",c)))->setVal(MASS);
+    //RooRealVar* peak = w->var(TString::Format("mgg_sig_m0_cat%d",c));
+    //peak->setVal(MASS);
+
+    SigPdf[c]->fitTo(*sigToFit[c],Range("SigFitRange"),SumW2Error(kTRUE));
+
+    double mPeak = ((RooRealVar*) w->var(TString::Format("mgg_sig_m0_cat%d",c)))->getVal()+(MASS-125.0); // shift the peak
+    ((RooRealVar*) w->var(TString::Format("mgg_sig_m0_cat%d",c)))->setVal(mPeak); // shift the peak
+
+
+    // IMPORTANT: fix all pdf parameters to constant, why?
+    RooArgSet sigParams( *w->var(TString::Format("mgg_sig_m0_cat%d",c)),
+			 *w->var(TString::Format("mgg_sig_sigma_cat%d",c)),
+			 *w->var(TString::Format("mgg_sig_alpha_cat%d",c)),
+			 *w->var(TString::Format("mgg_sig_n_cat%d",c)),
+			 *w->var(TString::Format("mgg_sig_gsigma_cat%d",c)),
+			 *w->var(TString::Format("mgg_sig_frac_cat%d",c)));
+    sigParams.add(RooArgSet(
+			   *w->var(TString::Format("mjj_sig_m0_cat%d",c)),
+		           *w->var(TString::Format("mjj_sig_sigma_cat%d",c)),
+		           *w->var(TString::Format("mjj_sig_alpha_cat%d",c)),
+		           *w->var(TString::Format("mjj_sig_n_cat%d",c)),
+		           *w->var(TString::Format("mjj_sig_gsigma_cat%d",c)),
+		           *w->var(TString::Format("mjj_sig_frac_cat%d",c))) );
+
+    w->defineSet(TString::Format("SigPdfParam_cat%d",c), sigParams);
+    SetConstantParams(w->set(TString::Format("SigPdfParam_cat%d",c)));
+
+    w->import(*SigPdf[c]);
+
+  } // close for ncat
+} // close signal model fit
+
 
 
 RooAbsPdf *BkgMggModelFit(RooWorkspace* w, int c, int modelNum) {
@@ -613,7 +714,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
   MjjBkgTmp[4] = new RooBernstein(TString::Format("MjjPol%d",3), "", *mGG,RooArgList(*p4,*p5,*p6,*p7));
 
 
-  if(MggBkgTruth->GetName()[0]=='B'){
+  if(MggBkgTruth->GetName()[0]=='B' && MjjBkgTruth->GetName()[0]=='B'){
     fprintf(fout,"Mgg x Mjj spectrum, bias results for cat%d\n",c);
     fprintf(fout,"Model\t\t\tExp\tPow\tBer1\tBer2\tBer3\n");
   }
@@ -624,17 +725,31 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
   float results[totalNDOF];
   for(int k=0; k<totalNDOF; ++k){
 
-    RooProdPdf *BkgFitTmp = new RooProdPdf("BkgFitTmp","",RooArgList(*MggBkgTmp[k],*MjjBkgTmp[k]));
-    RooRealVar *nbkg = new RooRealVar("nbkg","",1,0,100000);
-    RooExtendPdf *BkgFit = new RooExtendPdf(TString::Format("BkgFit_cat%d",c),"",*BkgFitTmp,*nbkg);
 
-    RooMCStudy * mcs = new RooMCStudy(*BkgTruth, RooArgSet(*mGG,*mJJ), FitModel(*BkgFit),Silence(), Extended(kFALSE), Binned(kFALSE),//13.81 corresponds to a mu that gives p(N=0)=0.000001
-				      FitOptions(Extended(kTRUE),PrintEvalErrors(0), Save()));
+
+    RooProdPdf *BkgFitTmp = new RooProdPdf("BkgFitTmp","",RooArgList(*MggBkgTmp[k],*MjjBkgTmp[k]));
+    RooRealVar *nbkg = new RooRealVar("nbkg","",(int)data->sumEntries(),0,3.0*data->sumEntries());
+    RooRealVar *nsig = new RooRealVar("nsig","",0.0*data->sumEntries(),-0.5*data->sumEntries(),0.5*data->sumEntries());
+    RooAddPdf *BkgFit = new RooAddPdf(TString::Format("BkgFit_cat%d",c), "", RooArgList(*BkgFitTmp,*w->pdf(TString::Format("SigPdf_cat%d",c))), RooArgList(*nbkg,*nsig));    
+
+    float tmp_sigma = sqrt(data->sumEntries());
+    RooRealVar *mean_sig = new RooRealVar("mean_sig","",0.0);
+    RooRealVar *sigma_sig = new RooRealVar("sigma_sig","",tmp_sigma);
+    RooRealVar *mean_bkg = new RooRealVar("mean_bkg","",data->sumEntries());
+    RooRealVar *sigma_bkg = new RooRealVar("sigma_bkg","",tmp_sigma);
+    RooGaussian *nsig_constraint = new RooGaussian("mu_constaint","mu_constraint",*nsig,*mean_sig,*sigma_sig);
+    RooGaussian *nbkg_constraint = new RooGaussian("nbkg_constaint","nbkg_constraint",*nbkg,*mean_bkg,*sigma_bkg);
+    mGG->setRange("massFit",100,180);
+    mJJ->setRange("massFit",60,180);
+
+    RooMCStudy * mcs = new RooMCStudy(*BkgTruth, RooArgSet(*mGG,*mJJ), FitModel(*BkgFit),Silence(), Extended(kTRUE), Binned(kFALSE),
+				      FitOptions(Range("massFit"), Save(kFALSE), SumW2Error(kTRUE),
+						 ExternalConstraints(RooArgSet(*nsig_constraint,*nbkg_constraint )) ));
+
     RooChi2MCSModule chi2mod;
     mcs->addModule(chi2mod);
 
-    if(c==0) mcs->generateAndFit(Npse*2,data->sumEntries(),kTRUE);
-    else mcs->generateAndFit(Npse,data->sumEntries(),kTRUE);
+    mcs->generateAndFit(Npse,data->sumEntries(),kTRUE);
 
     std::vector<double> pulls;
     //float genFraction = MggBkgTruth->createIntegral(*mGG,*mGG,"sigRegion")->getVal();
@@ -665,28 +780,22 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       case 3: fitFuncMjj = new RooBernstein("fitFuncMjj","",*mJJ,RooArgList(*q4,*q5,*q6)); break;
       case 4: fitFuncMjj = new RooBernstein("fitFuncMjj","",*mJJ,RooArgList(*q4,*q5,*q6,*q7)); break;
       }
+      nbkg = new RooRealVar("nbkg","",mcs->fitParams(i)->getRealValue("nbkg"));
+      nsig = new RooRealVar("nsig","",mcs->fitParams(i)->getRealValue("nsig"));
 
-      RooProdPdf * fitFunc = new RooProdPdf("fitFunc","",RooArgSet(*fitFuncMgg,*fitFuncMjj));
-      float fitFraction = fitFunc->createIntegral(RooArgSet(*mGG,*mJJ),RooArgSet(*mGG,*mJJ),"sigRegion")->getVal();
-      //float genN = mcs->fitParams(i)->getRealValue("ngen");
+      RooProdPdf * fitFuncBkg = new RooProdPdf("fitFuncBkg","",RooArgSet(*fitFuncMgg,*fitFuncMjj));
+      RooAddPdf *fitFunc = new RooAddPdf("fitFunc","",RooArgList(*fitFuncBkg,*w->pdf(TString::Format("SigPdf_cat%d",c))), RooArgList(*nbkg,*nsig));
       const RooAbsData* genDataset = mcs->genData(i);
-      char fitRangeString[80]; sprintf(fitRangeString,"mgg>%f && mgg<%f && mjj>%f && mjj<%f",sigMeanMgg-sigFWHM_Mgg,sigMeanMgg+sigFWHM_Mgg,sigMeanMjj-sigFWHM_Mjj,sigMeanMjj+sigFWHM_Mjj);
-      float genN = genDataset->sumEntries(fitRangeString);
 
-      float fitN2 = mcs->fitParams(i)->getRealValue("nbkg");
-      float a=0.318/2.0, nl=fitN2*fitFraction-0.5*TMath::ChisquareQuantile(a,2*fitN2*fitFraction), nh=0.5*TMath::ChisquareQuantile(1-a,2*(fitN2*fitFraction+1))-fitN2*fitFraction;
-      float fitNerr2 = 0.5*(nl+nh);
-      //float fitNerr2 = mcs->fitParams(i)->getRealValue("nbkgerr")*sqrt(sigFWHM*2/80.0);
-      RooAbsReal *intRange = fitFunc->createIntegral(RooArgSet(*mGG,*mJJ),RooArgSet(*mGG,*mJJ),"sigRegion");
-      nbkg = new RooRealVar("nbkg","",mcs->fitParams(i)->getRealValue("nbkg"),0,100000);
-      RooFormulaVar *normIntRange= new RooFormulaVar(Form("normIntRange_m125_cat%d",c),Form("normIntRange_m125_cat%d",c),"@0*@1",RooArgList(*intRange,*nbkg));
+      float fitN = mcs->fitParams(i)->getRealValue("nsig");
+      float fitNerr = mcs->fitParams(i)->getRealValue("nsigerr");//cout<<"nsig(err) nbgd(err) "<<fitN<<"("<<fitNerr<<") "<<mcs->fitParams(i)->getRealValue("nbkg")<<"("<<mcs->fitParams(i)->getRealValue("nbkgerr")<<") "<<mcs->fitParams(i)->getRealValue("chi2")/mcs->fitParams(i)->getRealValue("ndof")<<' '<<genDataset->sumEntries("mGG>123.5 && mGG < 126.5")<<' '<<genDataset->sumEntries("mGG>120 && mGG < 130")<<endl;
 
-      float fitN = normIntRange->getVal();
-      float fitNerr = normIntRange->getPropagatedError(*mcs->fitResult(i));
+      float normChi2 = mcs->fitParams(i)->getRealValue("chi2")/mcs->fitParams(i)->getRealValue("ndof");
+      //if(normChi2>0.5 && normChi2<1.5 && fitN>-3 && fitN<3 && fitNerr < 1.7 &&nSR>=0){
+      if(fitN>-1*sqrt(genDataset->sumEntries()) ){
+	pulls.push_back((0-fitN)/(fitNerr));
+      }
 
-      //cout<<"Pull check (NgenTot, Ngen, Nfit, fitErr, NfitOld, fitErrOld): "<<genDataset->sumEntries()<<' '<<genN<<' '<<fitN<<' '<<fitNerr<<' '<<fitN2*fitFraction<<' '<<fitNerr2<<' '<<endl;
-      if(fitNerr>0)// && mcs->fitParams(i)->getRealValue("chi2")/mcs->fitParams(i)->getRealValue("ndof")<10)
-	pulls.push_back((genN-fitN)/(fitNerr2));
     }
 
     for(int i=0; i<pulls.size(); ++i){
