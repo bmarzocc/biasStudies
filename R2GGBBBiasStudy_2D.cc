@@ -108,7 +108,8 @@ void runfits(int cat=0, int modelNumMgg=0, int modelNumMjj=0, int inDirNum=0)
 
   style();
 
-  TString card_name("hgghbb_models_Pol_8TeV.rs");
+  //TString card_name("hgghbb_models_Pol_8TeV.rs");
+  TString card_name("models_2D.rs");
   HLFactory hlf("HLFactory", card_name, false);
   RooWorkspace* w = hlf.GetWs();
   AddBkgData(w,cat);
