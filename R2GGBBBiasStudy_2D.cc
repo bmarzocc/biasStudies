@@ -303,21 +303,21 @@ RooAbsPdf *BkgMggModelFit(RooWorkspace* w, int c, int modelNum) {
 
   data[c]   = (RooDataSet*) w->data(TString::Format("Data_cat%d",c));
 
-  RooFormulaVar *p1mod = new RooFormulaVar(TString::Format("p1mod_cat%d",c),"","@0*@0",*w->var(TString::Format("mgg_bkg_8TeV_slope1_cat%d",c)));
-  RooFormulaVar *p2mod = new RooFormulaVar(TString::Format("p2mod_cat%d",c),"","@0*@0",*w->var(TString::Format("mgg_bkg_8TeV_slope2_cat%d",c)));
-  RooFormulaVar *p3mod = new RooFormulaVar(TString::Format("p3mod_cat%d",c),"","@0*@0",*w->var(TString::Format("mgg_bkg_8TeV_slope3_cat%d",c)));
-  RooFormulaVar *p4mod = new RooFormulaVar(TString::Format("p4mod_cat%d",c),"","@0*@0",*w->var(TString::Format("mgg_bkg_8TeV_slope4_cat%d",c)));
-  RooFormulaVar *p5mod = new RooFormulaVar(TString::Format("p5mod_cat%d",c),"","@0*@0",*w->var(TString::Format("mgg_bkg_8TeV_slope5_cat%d",c)));
-  RooFormulaVar *p1arg = new RooFormulaVar(TString::Format("p1arg_cat%d",c),"","@0",*w->var(TString::Format("mgg_bkg_8TeV_arg1_cat%d",c)));
-  RooFormulaVar *p2arg = new RooFormulaVar(TString::Format("p2arg_cat%d",c),"","@0",*w->var(TString::Format("mgg_bkg_8TeV_arg2_cat%d",c)));
-  RooFormulaVar *p3arg = new RooFormulaVar(TString::Format("p3arg_cat%d",c),"","@0",*w->var(TString::Format("mgg_bkg_8TeV_arg3_cat%d",c)));
-  RooFormulaVar *p4arg = new RooFormulaVar(TString::Format("p4arg_cat%d",c),"","@0",*w->var(TString::Format("mgg_bkg_8TeV_arg4_cat%d",c)));
-  RooFormulaVar *p5arg = new RooFormulaVar(TString::Format("p5arg_cat%d",c),"","@0",*w->var(TString::Format("mgg_bkg_8TeV_arg5_cat%d",c)));
-  RooFormulaVar *p1wid = new RooFormulaVar(TString::Format("p1wid_cat%d",c),"","@0",*w->var(TString::Format("mgg_bkg_8TeV_wid1_cat%d",c)));
-  RooFormulaVar *p2wid = new RooFormulaVar(TString::Format("p2wid_cat%d",c),"","@0",*w->var(TString::Format("mgg_bkg_8TeV_wid2_cat%d",c)));
-  RooFormulaVar *p3wid = new RooFormulaVar(TString::Format("p3wid_cat%d",c),"","@0",*w->var(TString::Format("mgg_bkg_8TeV_wid3_cat%d",c)));
-  RooFormulaVar *p4wid = new RooFormulaVar(TString::Format("p4wid_cat%d",c),"","@0",*w->var(TString::Format("mgg_bkg_8TeV_wid4_cat%d",c)));
-  RooFormulaVar *p5wid = new RooFormulaVar(TString::Format("p5wid_cat%d",c),"","@0",*w->var(TString::Format("mgg_bkg_8TeV_wid5_cat%d",c)));
+  RooFormulaVar *p1mod = new RooFormulaVar(TString::Format("mggp1mod_cat%d",c),"","@0*@0",*w->var(TString::Format("mgg_bkg_8TeV_slope1_cat%d",c)));
+  RooFormulaVar *p2mod = new RooFormulaVar(TString::Format("mggp2mod_cat%d",c),"","@0*@0",*w->var(TString::Format("mgg_bkg_8TeV_slope2_cat%d",c)));
+  RooFormulaVar *p3mod = new RooFormulaVar(TString::Format("mggp3mod_cat%d",c),"","@0*@0",*w->var(TString::Format("mgg_bkg_8TeV_slope3_cat%d",c)));
+  RooFormulaVar *p4mod = new RooFormulaVar(TString::Format("mggp4mod_cat%d",c),"","@0*@0",*w->var(TString::Format("mgg_bkg_8TeV_slope4_cat%d",c)));
+  RooFormulaVar *p5mod = new RooFormulaVar(TString::Format("mggp5mod_cat%d",c),"","@0*@0",*w->var(TString::Format("mgg_bkg_8TeV_slope5_cat%d",c)));
+  RooFormulaVar *p1arg = new RooFormulaVar(TString::Format("mggp1arg_cat%d",c),"","@0",*w->var(TString::Format("mgg_bkg_8TeV_arg1_cat%d",c)));
+  RooFormulaVar *p2arg = new RooFormulaVar(TString::Format("mggp2arg_cat%d",c),"","@0",*w->var(TString::Format("mgg_bkg_8TeV_arg2_cat%d",c)));
+  RooFormulaVar *p3arg = new RooFormulaVar(TString::Format("mggp3arg_cat%d",c),"","@0",*w->var(TString::Format("mgg_bkg_8TeV_arg3_cat%d",c)));
+  RooFormulaVar *p4arg = new RooFormulaVar(TString::Format("mggp4arg_cat%d",c),"","@0",*w->var(TString::Format("mgg_bkg_8TeV_arg4_cat%d",c)));
+  RooFormulaVar *p5arg = new RooFormulaVar(TString::Format("mggp5arg_cat%d",c),"","@0",*w->var(TString::Format("mgg_bkg_8TeV_arg5_cat%d",c)));
+  RooFormulaVar *p1wid = new RooFormulaVar(TString::Format("mggp1wid_cat%d",c),"","@0",*w->var(TString::Format("mgg_bkg_8TeV_wid1_cat%d",c)));
+  RooFormulaVar *p2wid = new RooFormulaVar(TString::Format("mggp2wid_cat%d",c),"","@0",*w->var(TString::Format("mgg_bkg_8TeV_wid2_cat%d",c)));
+  RooFormulaVar *p3wid = new RooFormulaVar(TString::Format("mggp3wid_cat%d",c),"","@0",*w->var(TString::Format("mgg_bkg_8TeV_wid3_cat%d",c)));
+  RooFormulaVar *p4wid = new RooFormulaVar(TString::Format("mggp4wid_cat%d",c),"","@0",*w->var(TString::Format("mgg_bkg_8TeV_wid4_cat%d",c)));
+  RooFormulaVar *p5wid = new RooFormulaVar(TString::Format("mggp5wid_cat%d",c),"","@0",*w->var(TString::Format("mgg_bkg_8TeV_wid5_cat%d",c)));
 
   RooExponential* expo1 = new RooExponential("exp1","",*mGG,*p1arg);
   RooExponential* expo2 = new RooExponential("exp2","",*mGG,*p2arg);
@@ -493,21 +493,21 @@ RooAbsPdf *BkgMjjModelFit(RooWorkspace* w, int c, int modelNum) {
 
   data[c]   = (RooDataSet*) w->data(TString::Format("Data_cat%d",c));
 
-  RooFormulaVar *p1mod = new RooFormulaVar(TString::Format("p1mod_cat%d",c),"","@0*@0",*w->var(TString::Format("mjj_bkg_8TeV_slope1_cat%d",c)));
-  RooFormulaVar *p2mod = new RooFormulaVar(TString::Format("p2mod_cat%d",c),"","@0*@0",*w->var(TString::Format("mjj_bkg_8TeV_slope2_cat%d",c)));
-  RooFormulaVar *p3mod = new RooFormulaVar(TString::Format("p3mod_cat%d",c),"","@0*@0",*w->var(TString::Format("mjj_bkg_8TeV_slope3_cat%d",c)));
-  RooFormulaVar *p4mod = new RooFormulaVar(TString::Format("p4mod_cat%d",c),"","@0*@0",*w->var(TString::Format("mjj_bkg_8TeV_slope4_cat%d",c)));
-  RooFormulaVar *p5mod = new RooFormulaVar(TString::Format("p5mod_cat%d",c),"","@0*@0",*w->var(TString::Format("mjj_bkg_8TeV_slope5_cat%d",c)));
-  RooFormulaVar *p1arg = new RooFormulaVar(TString::Format("p1arg_cat%d",c),"","@0",*w->var(TString::Format("mjj_bkg_8TeV_arg1_cat%d",c)));
-  RooFormulaVar *p2arg = new RooFormulaVar(TString::Format("p2arg_cat%d",c),"","@0",*w->var(TString::Format("mjj_bkg_8TeV_arg2_cat%d",c)));
-  RooFormulaVar *p3arg = new RooFormulaVar(TString::Format("p3arg_cat%d",c),"","@0",*w->var(TString::Format("mjj_bkg_8TeV_arg3_cat%d",c)));
-  RooFormulaVar *p4arg = new RooFormulaVar(TString::Format("p4arg_cat%d",c),"","@0",*w->var(TString::Format("mjj_bkg_8TeV_arg4_cat%d",c)));
-  RooFormulaVar *p5arg = new RooFormulaVar(TString::Format("p5arg_cat%d",c),"","@0",*w->var(TString::Format("mjj_bkg_8TeV_arg5_cat%d",c)));
-  RooFormulaVar *p1wid = new RooFormulaVar(TString::Format("p1wid_cat%d",c),"","@0",*w->var(TString::Format("mjj_bkg_8TeV_wid1_cat%d",c)));
-  RooFormulaVar *p2wid = new RooFormulaVar(TString::Format("p2wid_cat%d",c),"","@0",*w->var(TString::Format("mjj_bkg_8TeV_wid2_cat%d",c)));
-  RooFormulaVar *p3wid = new RooFormulaVar(TString::Format("p3wid_cat%d",c),"","@0",*w->var(TString::Format("mjj_bkg_8TeV_wid3_cat%d",c)));
-  RooFormulaVar *p4wid = new RooFormulaVar(TString::Format("p4wid_cat%d",c),"","@0",*w->var(TString::Format("mjj_bkg_8TeV_wid4_cat%d",c)));
-  RooFormulaVar *p5wid = new RooFormulaVar(TString::Format("p5wid_cat%d",c),"","@0",*w->var(TString::Format("mjj_bkg_8TeV_wid5_cat%d",c)));
+  RooFormulaVar *p1mod = new RooFormulaVar(TString::Format("mjjp1mod_cat%d",c),"","@0*@0",*w->var(TString::Format("mjj_bkg_8TeV_slope1_cat%d",c)));
+  RooFormulaVar *p2mod = new RooFormulaVar(TString::Format("mjjp2mod_cat%d",c),"","@0*@0",*w->var(TString::Format("mjj_bkg_8TeV_slope2_cat%d",c)));
+  RooFormulaVar *p3mod = new RooFormulaVar(TString::Format("mjjp3mod_cat%d",c),"","@0*@0",*w->var(TString::Format("mjj_bkg_8TeV_slope3_cat%d",c)));
+  RooFormulaVar *p4mod = new RooFormulaVar(TString::Format("mjjp4mod_cat%d",c),"","@0*@0",*w->var(TString::Format("mjj_bkg_8TeV_slope4_cat%d",c)));
+  RooFormulaVar *p5mod = new RooFormulaVar(TString::Format("mjjp5mod_cat%d",c),"","@0*@0",*w->var(TString::Format("mjj_bkg_8TeV_slope5_cat%d",c)));
+  RooFormulaVar *p1arg = new RooFormulaVar(TString::Format("mjjp1arg_cat%d",c),"","@0",*w->var(TString::Format("mjj_bkg_8TeV_arg1_cat%d",c)));
+  RooFormulaVar *p2arg = new RooFormulaVar(TString::Format("mjjp2arg_cat%d",c),"","@0",*w->var(TString::Format("mjj_bkg_8TeV_arg2_cat%d",c)));
+  RooFormulaVar *p3arg = new RooFormulaVar(TString::Format("mjjp3arg_cat%d",c),"","@0",*w->var(TString::Format("mjj_bkg_8TeV_arg3_cat%d",c)));
+  RooFormulaVar *p4arg = new RooFormulaVar(TString::Format("mjjp4arg_cat%d",c),"","@0",*w->var(TString::Format("mjj_bkg_8TeV_arg4_cat%d",c)));
+  RooFormulaVar *p5arg = new RooFormulaVar(TString::Format("mjjp5arg_cat%d",c),"","@0",*w->var(TString::Format("mjj_bkg_8TeV_arg5_cat%d",c)));
+  RooFormulaVar *p1wid = new RooFormulaVar(TString::Format("mjjp1wid_cat%d",c),"","@0",*w->var(TString::Format("mjj_bkg_8TeV_wid1_cat%d",c)));
+  RooFormulaVar *p2wid = new RooFormulaVar(TString::Format("mjjp2wid_cat%d",c),"","@0",*w->var(TString::Format("mjj_bkg_8TeV_wid2_cat%d",c)));
+  RooFormulaVar *p3wid = new RooFormulaVar(TString::Format("mjjp3wid_cat%d",c),"","@0",*w->var(TString::Format("mjj_bkg_8TeV_wid3_cat%d",c)));
+  RooFormulaVar *p4wid = new RooFormulaVar(TString::Format("mjjp4wid_cat%d",c),"","@0",*w->var(TString::Format("mjj_bkg_8TeV_wid4_cat%d",c)));
+  RooFormulaVar *p5wid = new RooFormulaVar(TString::Format("mjjp5wid_cat%d",c),"","@0",*w->var(TString::Format("mjj_bkg_8TeV_wid5_cat%d",c)));
 
   RooExponential* expo1 = new RooExponential("exp1","",*mJJ,*p1arg);
   RooExponential* expo2 = new RooExponential("exp2","",*mJJ,*p2arg);
@@ -721,6 +721,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
   }
 
   RooProdPdf *BkgTruthTmp = new RooProdPdf("BkgTruthTmp","",RooArgList(*MggBkgTruth,*MjjBkgTruth));
+  SetConstantParams(BkgTruthTmp->getParameters(RooArgSet(*mGG,*mJJ)));
   RooRealVar *nbkgTruth = new RooRealVar("nbkgTruth","",data->sumEntries());
   RooExtendPdf *BkgTruth = new RooExtendPdf("BkgTruth","",*BkgTruthTmp,*nbkgTruth);
 
@@ -733,7 +734,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
 
     RooProdPdf *BkgFitTmp = new RooProdPdf("BkgFitTmp","",RooArgList(*MggBkgTmp[k],*MjjBkgTmp[k]));
     RooRealVar *nbkg = new RooRealVar("nbkg","",(int)data->sumEntries(),0,3.0*data->sumEntries());
-    RooRealVar *nsig = new RooRealVar("nsig","",0.0*data->sumEntries(),-0.5*data->sumEntries(),0.5*data->sumEntries());
+    RooRealVar *nsig = new RooRealVar("nsig","",0,-0.5*data->sumEntries(),0.5*data->sumEntries());
     RooAddPdf *BkgFit = new RooAddPdf(TString::Format("BkgFit_cat%d",c), "", RooArgList(*BkgFitTmp,*w->pdf(TString::Format("SigPdf_cat%d",c))), RooArgList(*nbkg,*nsig));    
 
     float tmp_sigma = sqrt(data->sumEntries());
@@ -746,6 +747,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
     mGG->setRange("massFit",100,180);
     mJJ->setRange("massFit",60,180);
 
+
     RooMCStudy * mcs = new RooMCStudy(*BkgTruth, RooArgSet(*mGG,*mJJ), FitModel(*BkgFit),Silence(), Extended(kTRUE), Binned(kFALSE),
 				      FitOptions(Range("massFit"), Save(kFALSE), SumW2Error(kTRUE),
 						 ExternalConstraints(RooArgSet(*nsig_constraint,*nbkg_constraint )) ));
@@ -753,7 +755,41 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
     RooChi2MCSModule chi2mod;
     mcs->addModule(chi2mod);
 
-    mcs->generateAndFit(Npse,data->sumEntries(),kTRUE);
+
+    RooArgSet obs(*mGG,*mJJ) ; // Set with your observables
+    RooAbsCollection* constparams = BkgFit->getParameters(obs)->selectByAttrib("Constant",kFALSE) ;
+    RooAbsCollection* allparams = BkgFit->getParameters(obs);
+    RooAbsCollection* constparams2 = BkgTruth->getParameters(obs)->selectByAttrib("Constant",kFALSE) ;
+    RooAbsCollection* allparams2 = BkgTruth->getParameters(obs);
+
+    printf("\n\nnumConst=%d, numTotal=%d\n\n",constparams->getSize(),allparams->getSize());
+    constparams->Print();
+    allparams->Print();
+    printf("\n\nnumConst=%d, numTotal=%d\n\n",constparams2->getSize(),allparams2->getSize());
+    constparams2->Print();
+    allparams2->Print();
+
+    allparams->find("mgg_sig_alpha_cat1")->Print();
+    allparams->find("mgg_sig_frac_cat1")->Print();
+    allparams->find("mgg_sig_gsigma_cat1")->Print();
+    allparams->find("mgg_sig_m0_cat1")->Print();
+    allparams->find("mgg_sig_n_cat1")->Print();
+    allparams->find("mgg_sig_sigma_cat1")->Print();
+    allparams->find("mjj_sig_alpha_cat1")->Print();
+    allparams->find("mjj_sig_frac_cat1")->Print();
+    allparams->find("mjj_sig_gsigma_cat1")->Print();
+    allparams->find("mjj_sig_m0_cat1")->Print();
+    allparams->find("mjj_sig_n_cat1")->Print();
+    allparams->find("mjj_sig_sigma_cat1")->Print();
+    allparams->find("nbkg")->Print();
+    allparams->find("nsig")->Print();
+    allparams->find("p8")->Print();
+    allparams->find("p9")->Print();
+
+
+
+    //mcs->generateAndFit(Npse,data->sumEntries(),kTRUE);
+    mcs->generateAndFit(10,data->sumEntries(),kTRUE);
 
     std::vector<double> pulls;
     //float genFraction = MggBkgTruth->createIntegral(*mGG,*mGG,"sigRegion")->getVal();
