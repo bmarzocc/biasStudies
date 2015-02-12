@@ -720,7 +720,10 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
     fprintf(fout,"Model\t\t\tExp\tPow\tBer1\tBer2\tBer3\n");
   }
 
-  RooProdPdf *BkgTruth = new RooProdPdf("BkgTruth","",RooArgList(*MggBkgTruth,*MjjBkgTruth));
+  RooProdPdf *BkgTruthTmp = new RooProdPdf("BkgTruthTmp","",RooArgList(*MggBkgTruth,*MjjBkgTruth));
+  RooRealVar *nbkgTruth = new RooRealVar("nbkgTruth","",data->sumEntries());
+  RooExtendPdf *BkgTruth = new RooExtendPdf("BkgTruth","",*BkgTruthTmp,*nbkgTruth);
+
 
   const int Npse = 100;
   float results[totalNDOF];
