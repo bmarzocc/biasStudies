@@ -761,8 +761,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
     RooChi2MCSModule chi2mod;
     mcs->addModule(chi2mod);
 
-    //mcs->generateAndFit(Npse,data->sumEntries(),kTRUE);
-    mcs->generateAndFit(200,data->sumEntries(),kTRUE);//!!!!
+    mcs->generateAndFit(Npse,data->sumEntries(),kTRUE);
 
 
     //for debugging
@@ -854,7 +853,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       //if(i<6)
       //printf("PSE %d: Fit status=%d, nbkggen=%f, numdata=%f, nbkgfit=%f, nsigfit=%f, p8=%f, p9=%f\n",i,mcs->fitResult(i)->status(),genDataset->sumEntries(),data->sumEntries(),mcs->fitParams(i)->getRealValue("nbkg"),mcs->fitParams(i)->getRealValue("nsig"),mcs->fitParams(i)->getRealValue("p8"),mcs->fitParams(i)->getRealValue("p9"));
 
-      if(fitN>-0.95*sigFrac*data->sumEntries() ){//the minimum for nsig is -1*sigFrac*data->sumData() so make sure the fit isn't pressed against the boundary. that hints at failure
+      if(fitN>-0.65*sigFrac*data->sumEntries() ){//the minimum for nsig is -1*sigFrac*data->sumData() so make sure the fit isn't pressed against the boundary. that hints at failure
 	pulls.push_back((0-fitN)/(fitNerr));
       }
 
