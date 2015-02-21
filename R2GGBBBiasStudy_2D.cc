@@ -66,7 +66,9 @@ using namespace RooFit;
 using namespace RooStats ;
 
 Int_t NCAT = 4;
-TString inDir   = "/afs/cern.ch/work/o/obondu/public/forRadion/limitTrees/v42/v42_fitTo2D_nonresSearch_withKinFit/";
+TString inDir   = "/afs/cern.ch/work/o/obondu/public/forRadion/limitTrees/v44/v44_fitTo2D_nonresSearch_withKinFit/";
+//Int_t NCAT = 2;
+//TString inDir   = "/afs/cern.ch/work/o/obondu/public/forRadion/limitTrees/v44/v44_fitTo2D_resSearch_withRegKinFit/";
 
 void AddBkgData(RooWorkspace*, int);
 void AddSigData(RooWorkspace*, int);
@@ -719,7 +721,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
   MjjBkgTmp[4] = new RooBernstein(TString::Format("MjjPol%d",3), "", *mJJ,RooArgList(*p4,*p5,*p6,*p7));
 
 
-  if(MggBkgTruth->GetName()[0]=='E' && MjjBkgTruth->GetName()[0]=='E'){
+  if(MggBkgTruth->GetName()[0]=='B' && MjjBkgTruth->GetName()[0]=='B'){
     fprintf(fout,"Mgg x Mjj spectrum, bias results for cat%d\n",c);
     fprintf(fout,"Model\t\t\tExp\tPow\tBer1\tBer2\tBer3\n");
   }
@@ -730,7 +732,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
   RooExtendPdf *BkgTruth = new RooExtendPdf("BkgTruth","",*BkgTruthTmp,*nbkgTruth);
 
 
-  const int Npse = 1000;
+  const int Npse = 100;//!!!!
   float results[totalNDOF];
   //for(int k=0; k<totalNDOF; ++k){!!!!
   for(int k=0; k<1; ++k){
@@ -853,7 +855,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       //if(i<6)
       //printf("PSE %d: Fit status=%d, nbkggen=%f, numdata=%f, nbkgfit=%f, nsigfit=%f, p8=%f, p9=%f\n",i,mcs->fitResult(i)->status(),genDataset->sumEntries(),data->sumEntries(),mcs->fitParams(i)->getRealValue("nbkg"),mcs->fitParams(i)->getRealValue("nsig"),mcs->fitParams(i)->getRealValue("p8"),mcs->fitParams(i)->getRealValue("p9"));
 
-      if(fitN>-0.65*sigFrac*data->sumEntries() ){//the minimum for nsig is -1*sigFrac*data->sumData() so make sure the fit isn't pressed against the boundary. that hints at failure
+      if(fitN>-0.75*sigFrac*data->sumEntries() ){//the minimum for nsig is -1*sigFrac*data->sumData() so make sure the fit isn't pressed against the boundary. that hints at failure
 	pulls.push_back((0-fitN)/(fitNerr));
       }
 
