@@ -732,20 +732,20 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
   RooExtendPdf *BkgTruth = new RooExtendPdf("BkgTruth","",*BkgTruthTmp,*nbkgTruth);
 
 
-  const int Npse = 100;//!!!!
+  const int Npse = 1000;
   float results[totalNDOF];
-  //for(int k=0; k<totalNDOF; ++k){!!!!
-  for(int k=0; k<1; ++k){
+  for(int k=0; k<totalNDOF; ++k){
+      //for(int k=0; k<1; ++k){
 
     float sigFrac = 6./80.*80./120.; //estimate fracion of fit region is signal region
 
     RooProdPdf *BkgFitTmp = new RooProdPdf("BkgFitTmp","",RooArgList(*MggBkgTmp[k],*MjjBkgTmp[k]));
     RooRealVar *nbkg = new RooRealVar("nbkg","",data->sumEntries(),0.5*data->sumEntries(),1.5*data->sumEntries());
-    RooRealVar *nsig = new RooRealVar("nsig","",0,-1.0*sigFrac*data->sumEntries(),1.0*sigFrac*data->sumEntries());
+    RooRealVar *nsig = new RooRealVar("nsig","",0,-1.0*data->sumEntries(),1.0*data->sumEntries());
     RooAddPdf *BkgFit = new RooAddPdf(TString::Format("BkgFit_cat%d",c), "", RooArgList(*BkgFitTmp,*w->pdf(TString::Format("SigPdf_cat%d",c))), RooArgList(*nbkg,*nsig));    
     
     float tmp_sigma_bkg = sqrt(data->sumEntries());
-    float tmp_sigma_sig = sqrt(sigFrac*data->sumEntries());
+    float tmp_sigma_sig = 0.1*sigFrac*data->sumEntries();//sqrt(sigFrac*data->sumEntries());
     RooRealVar *mean_sig = new RooRealVar("mean_sig","",0.0);
     RooRealVar *sigma_sig = new RooRealVar("sigma_sig","",tmp_sigma_sig);
     RooRealVar *mean_bkg = new RooRealVar("mean_bkg","",data->sumEntries());
@@ -855,7 +855,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       //if(i<6)
       //printf("PSE %d: Fit status=%d, nbkggen=%f, numdata=%f, nbkgfit=%f, nsigfit=%f, p8=%f, p9=%f\n",i,mcs->fitResult(i)->status(),genDataset->sumEntries(),data->sumEntries(),mcs->fitParams(i)->getRealValue("nbkg"),mcs->fitParams(i)->getRealValue("nsig"),mcs->fitParams(i)->getRealValue("p8"),mcs->fitParams(i)->getRealValue("p9"));
 
-      if(fitN>-0.75*sigFrac*data->sumEntries() ){//the minimum for nsig is -1*sigFrac*data->sumData() so make sure the fit isn't pressed against the boundary. that hints at failure
+      if(fitN>-0.75*sigFrac*genDataset->sumEntries() ){//the minimum for nsig is -1*sigFrac*data->sumData() so make sure the fit isn't pressed against the boundary. that hints at failure
 	pulls.push_back((0-fitN)/(fitNerr));
       }
 
