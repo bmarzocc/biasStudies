@@ -159,7 +159,8 @@ void AddBkgData(RooWorkspace* w, int cat) {
 // retrieve the data tree;
 // no common preselection cut applied yet; 
 
-  TFile dataFile(inDir+"DataCS_m0.root");   
+  //TFile dataFile(inDir+"DataCS_m0.root");   
+  TFile dataFile(inDir+"DataCS_m300.root");   
   TTree* dataTree     = (TTree*) dataFile.Get("TCVARS");
   weightVar.setVal(1.);
   ntplVars->add(RooArgList(weightVar));
