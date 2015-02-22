@@ -65,10 +65,10 @@
 using namespace RooFit;
 using namespace RooStats ;
 
-Int_t NCAT = 4;
-TString inDir   = "/afs/cern.ch/work/o/obondu/public/forRadion/limitTrees/v44/v44_fitTo2D_nonresSearch_withKinFit/";
-//Int_t NCAT = 2;
-//TString inDir   = "/afs/cern.ch/work/o/obondu/public/forRadion/limitTrees/v44/v44_fitTo2D_resSearch_withRegKinFit/";
+//Int_t NCAT = 4;
+//TString inDir   = "/afs/cern.ch/work/o/obondu/public/forRadion/limitTrees/v44/v44_fitTo2D_nonresSearch_withKinFit/";
+Int_t NCAT = 2;
+TString inDir   = "/afs/cern.ch/work/o/obondu/public/forRadion/limitTrees/v44/v44_fitTo2D_resSearch_withRegKinFit/";
 
 void AddBkgData(RooWorkspace*, int);
 void AddSigData(RooWorkspace*, int);
@@ -188,7 +188,8 @@ void AddSigData(RooWorkspace* w, int cat) {
   const Int_t ncat = NCAT;
 
   RooArgSet* ntplVars = defineVariables();
-  TFile sigFile(inDir+"ggHH_Lam_1d0_Yt_1d0_c2_0d0_8TeV_m0.root");
+  //TFile sigFile(inDir+"ggHH_Lam_1d0_Yt_1d0_c2_0d0_8TeV_m0.root");
+  TFile sigFile(inDir+"Radion_m300_8TeV_m300.root");
   TTree* sigTree = (TTree*) sigFile.Get("TCVARS");
   // common preselection cut
   TString mainCut("1");
