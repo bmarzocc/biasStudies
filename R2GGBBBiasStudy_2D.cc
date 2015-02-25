@@ -68,6 +68,7 @@ using namespace RooStats ;
 Int_t NCAT;
 TString inDir;
 Int_t resMass;
+bool withCorr;
 
 void AddBkgData(RooWorkspace*, int);
 void AddSigData(RooWorkspace*, int);
@@ -729,8 +730,34 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
     fprintf(fout,"Model\t\t\tExp1,Exp1\tPow1,Pow1\tBer1,Ber1\tBer1,Ber2\tBer1,Ber3\n");
   }
 
-  RooProdPdf *BkgTruthTmp = new RooProdPdf("BkgTruthTmp","",RooArgList(*MggBkgTruth,*MjjBkgTruth));
-  //SetConstantParams(BkgTruthTmp->getParameters(RooArgSet(*mGG,*mJJ)));
+  /*correlations from MC sum:
+  res300 cat0: +0.0382
+  res300 cat1: -0.0713
+  nonres cat0: +0.0586
+  nonres cat1: +0.105
+  nonres cat2: -0.0900
+  nonres cat3: -0.0465
+  */
+  float corrVal_obs=0;
+  if(withCorr){
+    if(c==0 && resMass==300)
+      corrVal_obs=0.0382;
+    else if(c==1 && resMass==300)
+      corrVal_obs=-0.0713;
+    else if(c==0 && resMass==0)
+      corrVal_obs=0.0586;
+    else if(c==1 && resMass==0)
+      corrVal_obs=0.105;
+    else if(c==2 && resMass==0)
+      corrVal_obs=-0.0900;
+    else if(c==3 && resMass==0)
+      corrVal_obs=-0.0465;
+  }
+
+  RooRealVar *corrVal = new RooRealVar("corrVal","",corrVal_obs);
+  corrVal->setConstant(kTRUE);
+  RooGenericPdf *corrBkgTruth = new RooGenericPdf("correlationTruth","1+@0*@1*@2",RooArgList(*corrVal,*mGG,*mJJ));
+  RooProdPdf *BkgTruthTmp = new RooProdPdf("BkgTruthTmp","",RooArgList(*MggBkgTruth,*MjjBkgTruth,*corrBkgTruth));
   RooRealVar *nbkgTruth = new RooRealVar("nbkgTruth","",data->sumEntries());
   RooExtendPdf *BkgTruth = new RooExtendPdf("BkgTruth","",*BkgTruthTmp,*nbkgTruth);
 
@@ -748,7 +775,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
     RooAddPdf *BkgFit = new RooAddPdf(TString::Format("BkgFit_cat%d",c), "", RooArgList(*BkgFitTmp,*w->pdf(TString::Format("SigPdf_cat%d",c))), RooArgList(*nbkg,*nsig));    
     
     float tmp_sigma_bkg = sqrt(data->sumEntries());
-    float tmp_sigma_sig = (data->sumEntries()<100?0.01:1.0)*sigFrac*data->sumEntries();//sqrt(sigFrac*data->sumEntries());
+    float tmp_sigma_sig = (data->sumEntries()<100?0.1:0.38)*sigFrac*data->sumEntries();//sqrt(sigFrac*data->sumEntries());
     RooRealVar *mean_sig = new RooRealVar("mean_sig","",0.0);
     RooRealVar *sigma_sig = new RooRealVar("sigma_sig","",tmp_sigma_sig);
     RooRealVar *mean_bkg = new RooRealVar("mean_bkg","",data->sumEntries());
@@ -1172,7 +1199,9 @@ int main(int argc, const char* argv[]){
     modelNum2=atoi(argv[3]);
   if (argc>4)
     searchMass=atoi(argv[4]);
-   
+  if (argc>5)
+    withCorr=atoi(argv[5]);
+
   resMass=searchMass;
 
   if (searchMass==0){
