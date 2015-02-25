@@ -748,7 +748,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
     RooAddPdf *BkgFit = new RooAddPdf(TString::Format("BkgFit_cat%d",c), "", RooArgList(*BkgFitTmp,*w->pdf(TString::Format("SigPdf_cat%d",c))), RooArgList(*nbkg,*nsig));    
     
     float tmp_sigma_bkg = sqrt(data->sumEntries());
-    float tmp_sigma_sig = (data->sumEntries()<100?0.01*data->sumEntries():1.0)*sigFrac*data->sumEntries();//sqrt(sigFrac*data->sumEntries());
+    float tmp_sigma_sig = (data->sumEntries()<100?0.01*:1.0)*sigFrac*data->sumEntries();//sqrt(sigFrac*data->sumEntries());
     RooRealVar *mean_sig = new RooRealVar("mean_sig","",0.0);
     RooRealVar *sigma_sig = new RooRealVar("sigma_sig","",tmp_sigma_sig);
     RooRealVar *mean_bkg = new RooRealVar("mean_bkg","",data->sumEntries());
