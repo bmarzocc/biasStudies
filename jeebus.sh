@@ -13,7 +13,7 @@
 searchMass=0
 #searchMass=300
 
-withCorr="0 1"
+withCorr="1 0"
 
 catrange="0 1"
 if [ "$searchMass" -eq "0" ]; then
