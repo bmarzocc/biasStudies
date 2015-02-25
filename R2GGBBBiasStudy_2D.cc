@@ -187,8 +187,12 @@ void AddSigData(RooWorkspace* w, int cat) {
   const Int_t ncat = NCAT;
 
   RooArgSet* ntplVars = defineVariables();
-  TFile sigFile(TString::Format("%sRadion_m%d_8TeV_m%d.root",inDir.Data(),resMass,resMass));
-  TTree* sigTree = (TTree*) sigFile.Get("TCVARS");
+  TFile* sigFile;
+  if (resMass==0)
+    sigFile = new TFile(TString::Format("%sggHH_Lam_1d0_Yt_1d0_c2_0d0_8TeV_m0.root",inDir.Data()));
+  else 
+    sigFile = new TFile(TString::Format("%sRadion_m%d_8TeV_m%d.root",inDir.Data(),resMass,resMass));
+  TTree* sigTree = (TTree*) sigFile->Get("TCVARS");
   // common preselection cut
   TString mainCut("1");
   RooDataSet sigScaled(
