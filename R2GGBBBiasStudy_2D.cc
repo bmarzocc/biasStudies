@@ -158,7 +158,7 @@ void AddBkgData(RooWorkspace* w, int cat) {
 // retrieve the data tree;
 // no common preselection cut applied yet; 
 
-  TFile dataFile(TString::Format("%sDataCS_m$d.root",inDir,resMass));   
+  TFile dataFile(TString::Format("%sDataCS_m$d.root",inDir.Data(),resMass));   
   TTree* dataTree     = (TTree*) dataFile.Get("TCVARS");
   weightVar.setVal(1.);
   ntplVars->add(RooArgList(weightVar));
@@ -187,7 +187,7 @@ void AddSigData(RooWorkspace* w, int cat) {
   const Int_t ncat = NCAT;
 
   RooArgSet* ntplVars = defineVariables();
-  TFile sigFile(TString::Format("%sRadion_m%d_8TeV_m%d.root",inDir,resMass,resMass));
+  TFile sigFile(TString::Format("%sRadion_m%d_8TeV_m%d.root",inDir.Data(),resMass,resMass));
   TTree* sigTree = (TTree*) sigFile.Get("TCVARS");
   // common preselection cut
   TString mainCut("1");
@@ -711,8 +711,8 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
   MggBkgTmp[0] = new RooExponential(TString::Format("MggExp%d",1), "", *mGG,*p8);
   MggBkgTmp[1] = new RooGenericPdf("MggPow1","pow(@0,@1)",RooArgList(*mGG,*p8));
   MggBkgTmp[2] = new RooBernstein(TString::Format("MggPol%d",1), "", *mGG,RooArgList(*p0,*p1));
-  MggBkgTmp[3] = new RooBernstein(TString::Format("MggPol%d",2), "", *mGG,RooArgList(*p0,*p1,*p2));
-  MggBkgTmp[4] = new RooBernstein(TString::Format("MggPol%d",3), "", *mGG,RooArgList(*p0,*p1,*p2,*p3));
+  MggBkgTmp[3] = new RooBernstein(TString::Format("MggPol%d",1), "", *mGG,RooArgList(*p0,*p1));
+  MggBkgTmp[4] = new RooBernstein(TString::Format("MggPol%d",1), "", *mGG,RooArgList(*p0,*p1));
   MjjBkgTmp[0] = new RooExponential(TString::Format("MjjExp%d",1), "", *mJJ,*p9);
   MjjBkgTmp[1] = new RooGenericPdf("MjjPow1","pow(@0,@1)",RooArgList(*mJJ,*p9));
   MjjBkgTmp[2] = new RooBernstein(TString::Format("MjjPol%d",1), "", *mJJ,RooArgList(*p4,*p5));
@@ -722,7 +722,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
 
   if(MggBkgTruth->GetName()[0]=='B' && MjjBkgTruth->GetName()[0]=='B'){
     fprintf(fout,"Mgg x Mjj spectrum, bias results for cat%d\n",c);
-    fprintf(fout,"Model\t\t\tExp\tPow\tBer1\tBer2\tBer3\n");
+    fprintf(fout,"Model\t\t\tExp1,Exp1\tPow1,Pow1\tBer1,Ber1\tBer1,Ber2\tBer1,Ber3\n");
   }
 
   RooProdPdf *BkgTruthTmp = new RooProdPdf("BkgTruthTmp","",RooArgList(*MggBkgTruth,*MjjBkgTruth));
@@ -744,7 +744,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
     RooAddPdf *BkgFit = new RooAddPdf(TString::Format("BkgFit_cat%d",c), "", RooArgList(*BkgFitTmp,*w->pdf(TString::Format("SigPdf_cat%d",c))), RooArgList(*nbkg,*nsig));    
     
     float tmp_sigma_bkg = sqrt(data->sumEntries());
-    float tmp_sigma_sig = 0.1*sigFrac*data->sumEntries();//sqrt(sigFrac*data->sumEntries());
+    float tmp_sigma_sig = (data->sumEntries()<100?0.01*data->sumEntries():1.0)*sigFrac*data->sumEntries();//sqrt(sigFrac*data->sumEntries());
     RooRealVar *mean_sig = new RooRealVar("mean_sig","",0.0);
     RooRealVar *sigma_sig = new RooRealVar("sigma_sig","",tmp_sigma_sig);
     RooRealVar *mean_bkg = new RooRealVar("mean_bkg","",data->sumEntries());
@@ -829,8 +829,8 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       case 0: fitFuncMgg = new RooExponential("fitFuncMgg","",*mGG,*q8); break;
       case 1: fitFuncMgg = new RooGenericPdf("fitFuncMgg","pow(@0,@1)",RooArgList(*mGG,*q8)); break;
       case 2: fitFuncMgg = new RooBernstein("fitFuncMgg","",*mGG,RooArgList(*q0,*q1)); break;
-      case 3: fitFuncMgg = new RooBernstein("fitFuncMgg","",*mGG,RooArgList(*q0,*q1,*q2)); break;
-      case 4: fitFuncMgg = new RooBernstein("fitFuncMgg","",*mGG,RooArgList(*q0,*q1,*q2,*q3)); break;
+      case 3: fitFuncMgg = new RooBernstein("fitFuncMgg","",*mGG,RooArgList(*q0,*q1)); break;
+      case 4: fitFuncMgg = new RooBernstein("fitFuncMgg","",*mGG,RooArgList(*q0,*q1)); break;
       }
       switch(k){
       case 0: fitFuncMjj = new RooExponential("fitFuncMjj","",*mJJ,*q9); break;
@@ -948,8 +948,8 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       case 0: fitFuncMgg = new RooExponential("fitFuncMgg","",*mGG,*q8); break;
       case 1: fitFuncMgg = new RooGenericPdf("fitFuncMgg","pow(@0,@1)",RooArgList(*mGG,*q8)); break;
       case 2: fitFuncMgg = new RooBernstein("fitFuncMgg","",*mGG,RooArgList(*q0,*q1)); break;
-      case 3: fitFuncMgg = new RooBernstein("fitFuncMgg","",*mGG,RooArgList(*q0,*q1,*q2)); break;
-      case 4: fitFuncMgg = new RooBernstein("fitFuncMgg","",*mGG,RooArgList(*q0,*q1,*q2,*q3)); break;
+      case 3: fitFuncMgg = new RooBernstein("fitFuncMgg","",*mGG,RooArgList(*q0,*q1)); break;
+      case 4: fitFuncMgg = new RooBernstein("fitFuncMgg","",*mGG,RooArgList(*q0,*q1)); break;
       }
       switch(k){
       case 0: fitFuncMjj = new RooExponential("fitFuncMjj","",*mJJ,*q9); break;
@@ -1026,8 +1026,8 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       case 0: fitFuncMgg = new RooExponential("fitFuncMgg","",*mGG,*q8); break;
       case 1: fitFuncMgg = new RooGenericPdf("fitFuncMgg","pow(@0,@1)",RooArgList(*mGG,*q8)); break;
       case 2: fitFuncMgg = new RooBernstein("fitFuncMgg","",*mGG,RooArgList(*q0,*q1)); break;
-      case 3: fitFuncMgg = new RooBernstein("fitFuncMgg","",*mGG,RooArgList(*q0,*q1,*q2)); break;
-      case 4: fitFuncMgg = new RooBernstein("fitFuncMgg","",*mGG,RooArgList(*q0,*q1,*q2,*q3)); break;
+      case 3: fitFuncMgg = new RooBernstein("fitFuncMgg","",*mGG,RooArgList(*q0,*q1)); break;
+      case 4: fitFuncMgg = new RooBernstein("fitFuncMgg","",*mGG,RooArgList(*q0,*q1)); break;
       }
       switch(k){
       case 0: fitFuncMjj = new RooExponential("fitFuncMjj","",*mJJ,*q9); break;
