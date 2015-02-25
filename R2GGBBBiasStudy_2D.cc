@@ -65,10 +65,9 @@
 using namespace RooFit;
 using namespace RooStats ;
 
-//Int_t NCAT = 4;
-//TString inDir   = "/afs/cern.ch/work/o/obondu/public/forRadion/limitTrees/v44/v44_fitTo2D_nonresSearch_withKinFit/";
-Int_t NCAT = 2;
-TString inDir   = "/afs/cern.ch/work/o/obondu/public/forRadion/limitTrees/v44/v44_fitTo2D_resSearch_withRegKinFit/";
+Int_t NCAT;
+TString inDir;
+Int_t resMass;
 
 void AddBkgData(RooWorkspace*, int);
 void AddSigData(RooWorkspace*, int);
@@ -159,8 +158,7 @@ void AddBkgData(RooWorkspace* w, int cat) {
 // retrieve the data tree;
 // no common preselection cut applied yet; 
 
-  //TFile dataFile(inDir+"DataCS_m0.root");   
-  TFile dataFile(inDir+"DataCS_m300.root");   
+  TFile dataFile(TString::Format("%sDataCS_m$d.root",inDir,resMass));   
   TTree* dataTree     = (TTree*) dataFile.Get("TCVARS");
   weightVar.setVal(1.);
   ntplVars->add(RooArgList(weightVar));
@@ -189,8 +187,7 @@ void AddSigData(RooWorkspace* w, int cat) {
   const Int_t ncat = NCAT;
 
   RooArgSet* ntplVars = defineVariables();
-  //TFile sigFile(inDir+"ggHH_Lam_1d0_Yt_1d0_c2_0d0_8TeV_m0.root");
-  TFile sigFile(inDir+"Radion_m300_8TeV_m300.root");
+  TFile sigFile(TString::Format("%sRadion_m%d_8TeV_m%d.root",inDir,resMass,resMass));
   TTree* sigTree = (TTree*) sigFile.Get("TCVARS");
   // common preselection cut
   TString mainCut("1");
@@ -1161,7 +1158,7 @@ Double_t effSigma(TH1 *hist) {
 
 int main(int argc, const char* argv[]){
 
-  int cat=0, modelNum1=0, modelNum2=0;
+  int cat=0, modelNum1=0, modelNum2=0, searchMass=0;
 
   if (argc>1)
     cat=atoi(argv[1]);
@@ -1169,7 +1166,20 @@ int main(int argc, const char* argv[]){
     modelNum1=atoi(argv[2]);
   if (argc>3)
     modelNum2=atoi(argv[3]);
+  if (argc>4)
+    searchMass=atoi(argv[4]);
    
+  resMass=searchMass;
+
+  if (searchMass==0){
+    inDir  = "/afs/cern.ch/work/o/obondu/public/forRadion/limitTrees/v44/v44_fitTo2D_nonresSearch_withKinFit/";
+    NCAT=4;
+  }
+  else{
+    NCAT = 2;
+    inDir  = "/afs/cern.ch/work/o/obondu/public/forRadion/limitTrees/v44/v44_fitTo2D_resSearch_withRegKinFit/";
+  }
+
   runfits(cat,modelNum1,modelNum2);
 
   return 0;
