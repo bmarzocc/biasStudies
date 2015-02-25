@@ -220,6 +220,7 @@ void AddSigData(RooWorkspace* w, int cat) {
 							   mainCut);
 
   w->import(*sigToFitAll,Rename("Sig"));
+  sigFile->Close();
   return;
 } // end add signal function
 
@@ -726,7 +727,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
 
 
   if(MggBkgTruth->GetName()[0]=='B' && MjjBkgTruth->GetName()[0]=='B'){
-    fprintf(fout,"Mgg x Mjj spectrum, bias results for cat%d\n, withCorr=%d",c,withCorr);
+    fprintf(fout,"Mgg x Mjj spectrum, bias results for cat%d, withCorr=%d\n",c,withCorr);
     fprintf(fout,"Model\t\t\tExp1,Exp1\tPow1,Pow1\tBer1,Ber1\tBer1,Ber2\tBer1,Ber3\n");
   }
 
