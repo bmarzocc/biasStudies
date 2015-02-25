@@ -10,12 +10,19 @@
 #root -l -b -q "Make.C(0,2)"
 
 #for 2D
-#for icat in `echo "0 1 2 3"`; do
-for icat in `echo "0 1"`; do
+searchMass=0
+#searchMass=300
+
+catrange="0 1"
+if [ "$searchMass" -eq "0" ]; then
+    catrange="0 1 2 3"
+fi
+
+for icat in `echo ${catrange}`; do
     for imgg in `echo "0 1 4"`; do
 	for imjj in `echo "0 1 4"`; do
-	    echo "Running cat $icat mgg $imgg mjj $imjj"
-	    ./R2GGBBBiasStudy_2D.exe $icat $imgg $imjj > a.txt
+	    echo "Running cat $icat mgg $imgg mjj $imjj searchMass $searchMass"
+	    ./R2GGBBBiasStudy_2D.exe $icat $imgg $imjj $searchMass > a.txt
 	done
     done
 done
