@@ -128,7 +128,7 @@ void runfits(int cat=0, int modelNumMgg=0, int modelNumMjj=0, int inDirNum=0)
   BkgModelBias(w,cat,MggBkgTruth,MjjBkgTruth,fout);
 
 
-  if(modelNumMgg==4 && modelNumMjj==4) fprintf(fout,"\n\n");
+  //if(modelNumMgg==4 && modelNumMjj==4) fprintf(fout,"\n\n");
   fclose(fout);
   return;
 }
@@ -726,10 +726,10 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
   MjjBkgTmp[4] = new RooBernstein(TString::Format("MjjPol%d",3), "", *mJJ,RooArgList(*p4,*p5,*p6,*p7));
 
 
-  if(MggBkgTruth->GetName()[0]=='B' && MjjBkgTruth->GetName()[0]=='B'){
-    fprintf(fout,"Mgg x Mjj spectrum, bias results for cat%d, withCorr=%d\n",c,withCorr);
-    fprintf(fout,"Model\t\t\tExp1,Exp1\tPow1,Pow1\tBer1,Ber1\tBer1,Ber2\tBer1,Ber3\n");
-  }
+  //if(MggBkgTruth->GetName()[0]=='B' && MjjBkgTruth->GetName()[0]=='B'){
+  //  fprintf(fout,"Mgg x Mjj spectrum, bias results for cat%d, withCorr=%d\n",c,withCorr);
+  //  fprintf(fout,"Model\t\t\tExp1,Exp1\tPow1,Pow1\tBer1,Ber1\tBer1,Ber2\tBer1,Ber3\n");
+  //}
 
   /*correlations from MC sum:
   res300 cat0: +0.0382
@@ -1096,7 +1096,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
     delete mcs;
   }
 
-  fprintf(fout,"%s,%s\t%6.3f\t%6.3f\t%6.3f\t%6.3f\t%6.3f\n",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),results[0],results[1],results[2],results[3],results[4]);
+  fprintf(fout,"resMass=%d,cat%d,withCorr=%d\t%s,%s\t%6.3f\t%6.3f\t%6.3f\t%6.3f\t%6.3f\n",resMass,c,withCorr,MggBkgTruth->GetName(),MjjBkgTruth->GetName(),results[0],results[1],results[2],results[3],results[4]);
 
   return;
 }
