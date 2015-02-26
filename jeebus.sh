@@ -28,7 +28,7 @@ for iMass in `echo ${searchMass}`; do
 	    for imgg in `echo "0 1 4"`; do
 		for imjj in `echo "0 1 4"`; do
 		    echo "Running cat $icat mgg $imgg mjj $imjj searchMass $iMass withCorr $iCorr"
-		    ./R2GGBBBiasStudy_2D.exe $icat $imgg $imjj $iMass $iCorr > output${icat}${imgg}${imjj}${iMass}${iCorr}.txt
+		    ./R2GGBBBiasStudy_2D.exe $icat $imgg $imjj $iMass $iCorr > output${icat}${imgg}${imjj}${iMass}${iCorr}.txt &
 		done
 	    done
 	done
