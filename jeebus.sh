@@ -14,13 +14,16 @@ searchMass="0 300"
 
 withCorr="0 1"
 
-catrange="0 1"
-if [ "$searchMass" -eq "0" ]; then
-    catrange="0 1 2 3"
-fi
+catrange_m300="0 1"
+catrange_m0="0 1 2 3"
 
 for iMass in `echo ${searchMass}`; do
     for iCorr in `echo ${withCorr}`; do
+	if [ "${iMass}"=="300" ]; then
+	    catrange=${catrange_m300}
+	else
+	    catrange=${catrange_m0}
+	fi
 	for icat in `echo ${catrange}`; do
 	    for imgg in `echo "0 1 4"`; do
 		for imjj in `echo "0 1 4"`; do
@@ -31,4 +34,3 @@ for iMass in `echo ${searchMass}`; do
 	done
     done
 done
-
