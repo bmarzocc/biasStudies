@@ -14,6 +14,7 @@
 #include "TCanvas.h"
 #include "TAxis.h"
 #include "TH1F.h"
+#include "TH2F.h"
 #include "TF1.h"
 #include "TFile.h"
 #include "TTree.h"
@@ -75,7 +76,7 @@ void AddSigData(RooWorkspace*, int);
 void SigModelFit(RooWorkspace*, int);
 RooAbsPdf* BkgMggModelFit(RooWorkspace*, int, int);
 RooAbsPdf* BkgMjjModelFit(RooWorkspace*, int, int);
-void BkgModelBias(RooWorkspace*,int,RooAbsPdf*,RooAbsPdf*,FILE*);
+void BkgModelBias(RooWorkspace*,int,RooAbsPdf*,RooAbsPdf*,FILE*,FILE*);
 void SetParamNames(RooWorkspace*);
 void SetConstantParams(const RooArgSet* params);
 Double_t effSigma(TH1 *hist);
@@ -119,17 +120,19 @@ void runfits(int cat=0, int modelNumMgg=0, int modelNumMjj=0, int inDirNum=0)
   SigModelFit(w, cat);
 
   FILE *fout = fopen("resultsBias2D.txt","a");
+  FILE *foutCorr = fopen("resultsCorr2D.txt","a");
   //if(modelNumMgg==0 && modelNumMjj ==0) fprintf(fout,"%s\n\n",inDir.Data());
 
   if(modelNumMgg==2 || modelNumMjj==2) return;//skip Landau, it sucks.
   if(modelNumMgg==3 || modelNumMjj==3) return;//skip Laurent, it sucks.
   MggBkgTruth = BkgMggModelFit(w,cat,modelNumMgg); //Ber, Exp, Lan, Lau, Pow
   MjjBkgTruth = BkgMjjModelFit(w,cat,modelNumMjj); //Ber, Exp, Lan, Lau, Pow
-  BkgModelBias(w,cat,MggBkgTruth,MjjBkgTruth,fout);
+  BkgModelBias(w,cat,MggBkgTruth,MjjBkgTruth,fout,foutCorr);
 
 
   //if(modelNumMgg==4 && modelNumMjj==4) fprintf(fout,"\n\n");
   fclose(fout);
+  fclose(foutCorr);
   return;
 }
 
@@ -670,7 +673,7 @@ RooAbsPdf *BkgMjjModelFit(RooWorkspace* w, int c, int modelNum) {
 }
 
 
-void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBkgTruth, FILE *fout){
+void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBkgTruth, FILE *fout, FILE *foutCorr){
 
   std::vector<TString> catdesc;
 
@@ -765,6 +768,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
 
   const int Npse = 1000;
   float results[totalNDOF];
+  TH1F *corrHist = new TH1F("corrHist","corrHist",200,-1,1);
   for(int k=0; k<totalNDOF; ++k){
       //for(int k=0; k<1; ++k){
 
@@ -877,6 +881,8 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       RooProdPdf * fitFuncBkg = new RooProdPdf("fitFuncBkg","",RooArgSet(*fitFuncMgg,*fitFuncMjj));
       RooAddPdf *fitFunc = new RooAddPdf("fitFunc","",RooArgList(*fitFuncBkg,*w->pdf(TString::Format("SigPdf_cat%d",c))), RooArgList(*nbkg,*nsig));
       const RooAbsData* genDataset = mcs->genData(i);
+
+      corrHist->Fill(genDataset->correlation(*mGG,*mJJ));
 
       float fitN = mcs->fitParams(i)->getRealValue("nsig");
       float fitNerr = mcs->fitParams(i)->getRealValue("nsigerr");//cout<<"nsig(err) nbgd(err) "<<fitN<<"("<<fitNerr<<") "<<mcs->fitParams(i)->getRealValue("nbkg")<<"("<<mcs->fitParams(i)->getRealValue("nbkgerr")<<") "<<mcs->fitParams(i)->getRealValue("chi2")/mcs->fitParams(i)->getRealValue("ndof")<<' '<<genDataset->sumEntries("mGG>123.5 && mGG < 126.5")<<' '<<genDataset->sumEntries("mGG>120 && mGG < 130")<<endl;
@@ -1097,6 +1103,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
   }
 
   fprintf(fout,"resMass=%d,cat%d,withCorr=%d\t%s,%s\t%6.3f\t%6.3f\t%6.3f\t%6.3f\t%6.3f\n",resMass,c,withCorr,MggBkgTruth->GetName(),MjjBkgTruth->GetName(),results[0],results[1],results[2],results[3],results[4]);
+  fprintf(foutCorr,"resMass=%d,cat%d\t%s,%s\t%.4f +/- %.4f (RMS=%.4f)\n",resMass,c,MggBkgTruth->GetName(),MjjBkgTruth->GetName(),corrHist->GetMean(),effSigma(corrHist),corrHist->GetRMS());
 
   return;
 }
