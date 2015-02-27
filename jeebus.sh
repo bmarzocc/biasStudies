@@ -11,16 +11,14 @@
 
 #for 2D
 searchMass="0 300"
-
 withCorr="0 1"
 
 catrange_m300="0 1"
 catrange_m0="0 1 2 3"
 
 #temporary settings
-searchMass="0"
-withCorr="0 1"
-catrange_m0="0 1 2 3"
+searchMass="0 300"
+withCorr="0"
 
 for iMass in `echo ${searchMass}`; do
     for iCorr in `echo ${withCorr}`; do
