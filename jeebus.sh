@@ -10,22 +10,22 @@
 #root -l -b -q "Make.C(0,2)"
 
 #for 2D
-searchMass="0 300"
+searchMass="0 270 300"
 withCorr="0 1"
 
-catrange_m300="0 1"
-catrange_m0="0 1 2 3"
+catrange_res="0 1"
+catrange_nonres="0 1 2 3"
 
 #temporary settings
-searchMass="0 300"
-withCorr="0"
+#searchMass="0 300"
+#withCorr="0"
 
 for iMass in `echo ${searchMass}`; do
     for iCorr in `echo ${withCorr}`; do
-	if [ "${iMass}" -eq "300" ]; then
-	    catrange=${catrange_m300}
+	if [ "${iMass}" -eq "0" ]; then
+	    catrange=${catrange_nonres}
 	else
-	    catrange=${catrange_m0}
+	    catrange=${catrange_res}
 	fi
 	for icat in `echo ${catrange}`; do
 	    for imgg in `echo "0 1 4"`; do
