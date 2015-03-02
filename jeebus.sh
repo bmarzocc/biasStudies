@@ -17,8 +17,13 @@ catrange_res="0 1"
 catrange_nonres="0 1 2 3"
 
 #temporary settings
-#searchMass="0 300"
-#withCorr="0"
+if [ $# -ge 1 ]; then
+    searchMass=$1
+fi
+if [ $# -ge 2 ]; then
+    withCorr=$2
+fi
+
 
 for iMass in `echo ${searchMass}`; do
     for iCorr in `echo ${withCorr}`; do
@@ -31,13 +36,14 @@ for iMass in `echo ${searchMass}`; do
 	    for imgg in `echo "0 1 4"`; do
 		for imjj in `echo "0 1 4"`; do
 		    echo "Running cat $icat mgg $imgg mjj $imjj searchMass $iMass withCorr $iCorr"
-		    if [ "$imgg" -eq "4" ] && [ "$imjj" -eq "4" ]; then
-			./R2GGBBBiasStudy_2D.exe $icat $imgg $imjj $iMass $iCorr > output-${icat}-${imgg}-${imjj}-${iMass}-${iCorr}.txt
-			sleep 100
-			rm output*txt
-		    else
-			./R2GGBBBiasStudy_2D.exe $icat $imgg $imjj $iMass $iCorr > output-${icat}-${imgg}-${imjj}-${iMass}-${iCorr}.txt &
-		    fi
+		    ./R2GGBBBiasStudy_2D.exe $icat $imgg $imjj $iMass $iCorr > output-${icat}-${imgg}-${imjj}-${iMass}-${iCorr}.txt
+		    #if [ "$imgg" -eq "4" ] && [ "$imjj" -eq "4" ]; then
+		    #	./R2GGBBBiasStudy_2D.exe $icat $imgg $imjj $iMass $iCorr > output-${icat}-${imgg}-${imjj}-${iMass}-${iCorr}.txt
+		    #	sleep 100
+		    #	rm output*txt
+		    #else
+		    #	./R2GGBBBiasStudy_2D.exe $icat $imgg $imjj $iMass $iCorr > output-${icat}-${imgg}-${imjj}-${iMass}-${iCorr}.txt &
+		    #fi
 		done
 	    done
 	done
