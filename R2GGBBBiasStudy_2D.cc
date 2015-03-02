@@ -734,13 +734,15 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
   //  fprintf(fout,"Model\t\t\tExp1,Exp1\tPow1,Pow1\tBer1,Ber1\tBer1,Ber2\tBer1,Ber3\n");
   //}
 
-  /*correlations from MC sum:
-  res300 cat0: +0.0382
-  res300 cat1: -0.0713
-  nonres cat0: +0.0586
-  nonres cat1: +0.105
-  nonres cat2: -0.0900
-  nonres cat3: -0.0465
+  /*correlations from MC sum, from data (blinded on 120<mgg<130):
+  res270 cat0: -0.0163, -0.154
+  res270 cat1: -0.218 , -0.0345
+  res300 cat0: +0.0382, +0.164
+  res300 cat1: -0.0713, +0.370
+  nonres cat0: +0.0586, -0.123
+  nonres cat1: +0.105 , -0.0121
+  nonres cat2: -0.0900, +0.0607
+  nonres cat3: -0.0465, +0.116
   */
   float corrVal_obs=0;
   if(withCorr){
@@ -748,6 +750,10 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       corrVal_obs=0.0382;
     else if(c==1 && resMass==300)
       corrVal_obs=-0.0713;
+    else if(c==0 && resMass==270)
+      corrVal_obs=-0.0163;
+    else if(c==1 && resMass==270)
+      corrVal_obs=-0.218;
     else if(c==0 && resMass==0)
       corrVal_obs=0.0586;
     else if(c==1 && resMass==0)
@@ -1103,7 +1109,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
   }
 
   fprintf(fout,"resMass=%d,cat%d,withCorr=%d\t%s,%s\t%6.3f\t%6.3f\t%6.3f\t%6.3f\t%6.3f\n",resMass,c,withCorr,MggBkgTruth->GetName(),MjjBkgTruth->GetName(),results[0],results[1],results[2],results[3],results[4]);
-  fprintf(foutCorr,"resMass=%d,cat%d\t%s,%s\t%.4f +/- %.4f (RMS=%.4f)\n",resMass,c,MggBkgTruth->GetName(),MjjBkgTruth->GetName(),corrHist->GetMean(),effSigma(corrHist),corrHist->GetRMS());
+  fprintf(foutCorr,"resMass=%d,cat%d\t%s,%s\t%.4f +/- %.4f\n",resMass,c,MggBkgTruth->GetName(),MjjBkgTruth->GetName(),corrHist->GetMean(),effSigma(corrHist));
 
   return;
 }
