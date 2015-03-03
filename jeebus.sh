@@ -23,6 +23,10 @@ fi
 if [ $# -ge 2 ]; then
     withCorr=$2
 fi
+if [ $# -ge 3 ]; then
+    catrange_res=$3
+    catrange_nonres=$3
+fi
 
 
 for iMass in `echo ${searchMass}`; do
@@ -37,6 +41,7 @@ for iMass in `echo ${searchMass}`; do
 		for imjj in `echo "0 1 4"`; do
 		    echo "Running cat $icat mgg $imgg mjj $imjj searchMass $iMass withCorr $iCorr"
 		    ./R2GGBBBiasStudy_2D.exe $icat $imgg $imjj $iMass $iCorr > output-${icat}-${imgg}-${imjj}-${iMass}-${iCorr}.txt
+		    rm output-${icat}-${imgg}-${imjj}-${iMass}-${iCorr}.txt
 		    #if [ "$imgg" -eq "4" ] && [ "$imjj" -eq "4" ]; then
 		    #	./R2GGBBBiasStudy_2D.exe $icat $imgg $imjj $iMass $iCorr > output-${icat}-${imgg}-${imjj}-${iMass}-${iCorr}.txt
 		    #	sleep 100
