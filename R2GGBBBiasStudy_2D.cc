@@ -764,6 +764,8 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       corrVal_obs=-0.0465;
   }
 
+  corrVal_obs=fabs(corrVal_obs);
+  printf("withCorr=%d corresponds to corrVal=%f\n",withCorr,corrVal_obs);
   RooRealVar *corrVal = new RooRealVar("corrVal","",corrVal_obs);
   corrVal->setConstant(kTRUE);
   RooGenericPdf *corrBkgTruth = new RooGenericPdf("correlationTruth","1+@0*@1*@2",RooArgList(*corrVal,*mGG,*mJJ));
