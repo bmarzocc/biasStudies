@@ -1109,7 +1109,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
   }
 
   fprintf(fout,"resMass=%d,cat%d,withCorr=%d\t%s,%s\t%6.3f\t%6.3f\t%6.3f\t%6.3f\t%6.3f\n",resMass,c,withCorr,MggBkgTruth->GetName(),MjjBkgTruth->GetName(),results[0],results[1],results[2],results[3],results[4]);
-  fprintf(foutCorr,"resMass=%d,cat%d\t%s,%s\t%.4f +/- %.4f\n",resMass,c,MggBkgTruth->GetName(),MjjBkgTruth->GetName(),corrHist->GetMean(),effSigma(corrHist));
+  fprintf(foutCorr,"resMass=%d,cat%d,withCorr=%d\t%s,%s\t%.4f +/- %.4f\n",resMass,c,withCorr,MggBkgTruth->GetName(),MjjBkgTruth->GetName(),corrHist->GetMean(),effSigma(corrHist));
 
   return;
 }
