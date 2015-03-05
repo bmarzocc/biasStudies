@@ -125,6 +125,8 @@ void runfits(int cat=0, int modelNumMgg=0, int modelNumMjj=0, int inDirNum=0)
 
   if(modelNumMgg==2 || modelNumMjj==2) return;//skip Landau, it sucks.
   if(modelNumMgg==3 || modelNumMjj==3) return;//skip Laurent, it sucks.
+  if(withCorr && modelNumMgg==0 ) return; //skip Ber for mgg correlation
+
   MggBkgTruth = BkgMggModelFit(w,cat,modelNumMgg); //Ber, Exp, Lan, Lau, Pow
   MjjBkgTruth = BkgMjjModelFit(w,cat,modelNumMjj); //Ber, Exp, Lan, Lau, Pow
   BkgModelBias(w,cat,MggBkgTruth,MjjBkgTruth,fout,foutCorr);
@@ -304,6 +306,8 @@ RooAbsPdf *BkgMggModelFit(RooWorkspace* w, int c, int modelNum) {
 
   RooRealVar* mGG     = w->var("mgg");
   mGG->setUnit("GeV");
+  RooRealVar* mJJ     = w->var("mjj");
+  mJJ->setUnit("GeV");
   
   TLatex *text = new TLatex();
   text->SetNDC();
@@ -472,10 +476,78 @@ RooAbsPdf *BkgMggModelFit(RooWorkspace* w, int c, int modelNum) {
   fprintf(results,"\n\n");
   fclose(results);
 
+  //redo the fit since parameters are used across multiple truth models
   MggBkgTmp[bestN]->fitTo(*data[c], Strategy(1),Minos(kFALSE), Range(minMassFit,maxMassFit),SumW2Error(kTRUE), Save(kTRUE));//strategy 1 or 2?
-  w->import(*MggBkgTmp[bestN]);
-  return MggBkgTmp[bestN];
 
+  /*correlations from MC sum, from data (blinded on 120<mgg<130):
+  res270 cat0: -0.0163, -0.154
+  res270 cat1: -0.218 , -0.0345
+  res300 cat0: +0.0382, +0.164
+  res300 cat1: -0.0713, +0.370
+  nonres cat0: +0.0586, -0.123
+  nonres cat1: +0.105 , -0.0121
+  nonres cat2: -0.0900, +0.0607
+  nonres cat3: -0.0465, +0.116
+  */
+  float corrVal_obs=0;
+  if(withCorr){
+    if(c==0 && resMass==300)
+      corrVal_obs=0.0382;
+    else if(c==1 && resMass==300)
+      corrVal_obs=-0.0713;
+    else if(c==0 && resMass==270)
+      corrVal_obs=-0.0163;
+    else if(c==1 && resMass==270)
+      corrVal_obs=-0.218;
+    else if(c==0 && resMass==0)
+      corrVal_obs=0.0586;
+    else if(c==1 && resMass==0)
+      corrVal_obs=0.105;
+    else if(c==2 && resMass==0)
+      corrVal_obs=-0.0900;
+    else if(c==3 && resMass==0)
+      corrVal_obs=-0.0465;
+  }
+
+  printf("withCorr=%d corresponds to corrVal=%f\n",withCorr,corrVal_obs);
+  RooRealVar *corrVal = new RooRealVar("corrVal","",corrVal_obs);
+  corrVal->setConstant(kTRUE);
+
+  if (withCorr){//contruct a pdf with f(mgg) -> f(mgg+rho*mjj)
+
+    switch (modelNum){
+
+    case 0: //Bernstein
+
+      MggBkgTmp[0] = new RooGenericPdf("BerN0Mgg", "@3", RooArgList(*mGG,*mJJ,*corrVal,*p1mod));
+      MggBkgTmp[1] = new RooGenericPdf("BerN1Mgg", "@3*(1-(@0+@1*@2))+@4*((@0+@1*@2))", RooArgList(*mGG,*mJJ,*corrVal,*p1mod,*p2mod));
+      MggBkgTmp[2] = new RooGenericPdf("BerN2Mgg", "@3*(1-(@0+@1*@2))**2+@4*2*(@0+@1*@2)*(1-(@0+@1*@2))+@5*(@0+@1*@2)**2", RooArgList(*mGG,*mJJ,*corrVal,*p1mod,*p2mod,*p3mod));
+      MggBkgTmp[3] = new RooGenericPdf("BerN3Mgg", "@3*(1-(@0+@1*@2))**3+@4*3*(@0+@1*@2)*(1-(@0+@1*@2))**2+@5*3*(@0+@1*@2)**2*(1-(@0+@1*@2))+@6*(@0+@1*@2)**3", RooArgList(*mGG,*mJJ,*corrVal,*p1mod,*p2mod,*p3mod,*p4mod));
+      MggBkgTmp[4] = new RooGenericPdf("BerN4Mgg", "@3*(1-(@0+@1*@2))**4+@4*(3*(@0+@1*@2)*(1-(@0+@1*@2))**3+(@0+@1*@2)*(1-(@0+@1*@2))**3)+@5*(6*(@0+@1*@2)**2*(1-(@0+@1*@2))**2)+@6*((@0+@1*@2)**3*(1-(@0+@1*@2))+3*(@0+@1*@2)**3*(1-(@0+@1*@2)))+@7*(@0+@1*@2)**4", RooArgList(*mGG,*mJJ,*corrVal,*p1mod,*p2mod,*p3mod,*p4mod,*p5mod));
+      break;
+
+    case 1: //Exponential
+      MggBkgTmp[0] = new RooGenericPdf("ExpN1Mgg", "@3*exp(@4*(@0+@1*@2))", RooArgList(*mGG,*mJJ,*corrVal,*w->var(TString::Format("mgg_bkg_8TeV_norm_cat%d",c)),*p1arg));
+      MggBkgTmp[1] = new RooGenericPdf("ExpN2Mgg", "@3*exp(@4*(@0+@1*@2))+@5*exp(@6*(@0+@1*@2))", RooArgList(*mGG,*mJJ,*corrVal,*p1mod,*p1arg,*p2mod,*p2arg));
+      MggBkgTmp[2] = new RooGenericPdf("ExpN3Mgg", "@3*exp(@4*(@0+@1*@2))+@5*exp(@6*(@0+@1*@2))+@7*exp(@8*(@0+@1*@2))", RooArgList(*mGG,*mJJ,*corrVal,*p1mod,*p1arg,*p2mod,*p2arg,*p3mod,*p3arg));
+      MggBkgTmp[3] = new RooGenericPdf("ExpN4Mgg", "@3*exp(@4*(@0+@1*@2))+@5*exp(@6*(@0+@1*@2))+@7*exp(@8*(@0+@1*@2))", RooArgList(*mGG,*mJJ,*corrVal,*p1mod,*p1arg,*p2mod,*p2arg,*p3mod,*p3arg));
+      MggBkgTmp[4] = new RooGenericPdf("ExpN5Mgg", "@3*exp(@4*(@0+@1*@2))+@5*exp(@6*(@0+@1*@2))+@7*exp(@8*(@0+@1*@2))", RooArgList(*mGG,*mJJ,*corrVal,*p1mod,*p1arg,*p2mod,*p2arg,*p3mod,*p3arg));
+      break;
+
+    case 4: //Power
+      MggBkgTmp[0] = new RooGenericPdf("PowN1Mgg","@3*pow(@0+@1*@2,@4)",RooArgList(*mGG,*mJJ,*corrVal,*p1mod,*p1arg));
+      MggBkgTmp[1] = new RooGenericPdf("PowN2Mgg","@3*pow(@0+@1*@2,@4)+@5*pow(@0+@1*@2,@6)",RooArgList(*mGG,*mJJ,*corrVal,*p1mod,*p1arg,*p2mod,*p2arg));
+      MggBkgTmp[2] = new RooGenericPdf("PowN3Mgg","@3*pow(@0+@1*@2,@4)+@5*pow(@0+@1*@2,@6)+@7*pow(@0+@1*@2,@8)",RooArgList(*mGG,*mJJ,*corrVal,*p1mod,*p1arg,*p2mod,*p2arg,*p3mod,*p3arg));
+      MggBkgTmp[3] = new RooGenericPdf("PowN4Mgg","@3*pow(@0+@1*@2,@4)+@5*pow(@0+@1*@2,@6)+@7*pow(@0+@1*@2,@8)",RooArgList(*mGG,*mJJ,*corrVal,*p1mod,*p1arg,*p2mod,*p2arg,*p3mod,*p3arg));
+      MggBkgTmp[4] = new RooGenericPdf("PowN5Mgg","@3*pow(@0+@1*@2,@4)+@5*pow(@0+@1*@2,@6)+@7*pow(@0+@1*@2,@8)",RooArgList(*mGG,*mJJ,*corrVal,*p1mod,*p1arg,*p2mod,*p2arg,*p3mod,*p3arg));
+      
+      break;
+    }
+  }
+  
+  w->import(*MggBkgTmp[bestN]);
+
+  return MggBkgTmp[bestN];
 }
 
 
@@ -736,42 +808,8 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
   //  fprintf(fout,"Model\t\t\tExp1,Exp1\tPow1,Pow1\tBer1,Ber1\tBer1,Ber2\tBer1,Ber3\n");
   //}
 
-  /*correlations from MC sum, from data (blinded on 120<mgg<130):
-  res270 cat0: -0.0163, -0.154
-  res270 cat1: -0.218 , -0.0345
-  res300 cat0: +0.0382, +0.164
-  res300 cat1: -0.0713, +0.370
-  nonres cat0: +0.0586, -0.123
-  nonres cat1: +0.105 , -0.0121
-  nonres cat2: -0.0900, +0.0607
-  nonres cat3: -0.0465, +0.116
-  */
-  float corrVal_obs=0;
-  if(withCorr){
-    if(c==0 && resMass==300)
-      corrVal_obs=0.0382;
-    else if(c==1 && resMass==300)
-      corrVal_obs=-0.0713;
-    else if(c==0 && resMass==270)
-      corrVal_obs=-0.0163;
-    else if(c==1 && resMass==270)
-      corrVal_obs=-0.218;
-    else if(c==0 && resMass==0)
-      corrVal_obs=0.0586;
-    else if(c==1 && resMass==0)
-      corrVal_obs=0.105;
-    else if(c==2 && resMass==0)
-      corrVal_obs=-0.0900;
-    else if(c==3 && resMass==0)
-      corrVal_obs=-0.0465;
-  }
-
-  corrVal_obs=fabs(corrVal_obs);
-  printf("withCorr=%d corresponds to corrVal=%f\n",withCorr,corrVal_obs);
-  RooRealVar *corrVal = new RooRealVar("corrVal","",corrVal_obs);
-  corrVal->setConstant(kTRUE);
-  RooGenericPdf *corrBkgTruth = new RooGenericPdf("correlationTruth","1+@0*@1*@2",RooArgList(*corrVal,*mGG,*mJJ));
-  RooProdPdf *BkgTruthTmp = new RooProdPdf("BkgTruthTmp","",RooArgList(*MggBkgTruth,*MjjBkgTruth,*corrBkgTruth));
+  //RooGenericPdf *corrBkgTruth = new RooGenericPdf("correlationTruth","1+@0*@1*@2",RooArgList(*corrVal,*mGG,*mJJ));
+  RooProdPdf *BkgTruthTmp = new RooProdPdf("BkgTruthTmp","",RooArgList(*MggBkgTruth,*MjjBkgTruth));
   RooRealVar *nbkgTruth = new RooRealVar("nbkgTruth","",data->sumEntries());
   RooExtendPdf *BkgTruth = new RooExtendPdf("BkgTruth","",*BkgTruthTmp,*nbkgTruth);
 
@@ -790,7 +828,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
     RooAddPdf *BkgFit = new RooAddPdf(TString::Format("BkgFit_cat%d",c), "", RooArgList(*BkgFitTmp,*w->pdf(TString::Format("SigPdf_cat%d",c))), RooArgList(*nbkg,*nsig));    
     
     float tmp_sigma_bkg = sqrt(data->sumEntries());
-    float tmp_sigma_sig = (data->sumEntries()<100?0.1:0.38)*sigFrac*data->sumEntries();//sqrt(sigFrac*data->sumEntries());
+    float tmp_sigma_sig = 0.1*sigFrac*data->sumEntries();//sqrt(sigFrac*data->sumEntries());
     RooRealVar *mean_sig = new RooRealVar("mean_sig","",0.0);
     RooRealVar *sigma_sig = new RooRealVar("sigma_sig","",tmp_sigma_sig);
     RooRealVar *mean_bkg = new RooRealVar("mean_bkg","",data->sumEntries());
