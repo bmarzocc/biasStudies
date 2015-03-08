@@ -14,7 +14,7 @@ highBiasFlag=False
 for line in file:
     if line.find(searchStr)<0:
         continue
-    data=line.replace(searchStr,'').replace('Mgg','').replace('Mjj','').replace('N','').replace('\n','').split()
+    data=line.replace(searchStr,'').replace('Mgg','').replace('Mjj','').replace('N','').replace('\n','').replace('\x00','').split()
 
     expexpBiasList.append(float(data[1]))
 
