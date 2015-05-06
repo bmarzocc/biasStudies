@@ -429,7 +429,7 @@ RooAbsPdf *BkgMggModelFit(RooWorkspace* w, int c, int modelNum) {
     data[c]->plotOn(plotMggBkg[c]);    
 
     plotMggBkg[c]->SetTitle("");      
-    plotMggBkg[c]->SetMinimum(0.0);
+    plotMggBkg[c]->SetMinimum(1e-5);
     plotMggBkg[c]->SetMaximum(1.40*plotMggBkg[c]->GetMaximum());
     plotMggBkg[c]->GetXaxis()->SetTitle("m_{#gamma#gamma} (GeV)");
     plotMggBkg[c]->Draw();  
@@ -689,7 +689,7 @@ RooAbsPdf *BkgMjjModelFit(RooWorkspace* w, int c, int modelNum) {
     data[c]->plotOn(plotMjjBkg[c]);    
 
     plotMjjBkg[c]->SetTitle("");      
-    plotMjjBkg[c]->SetMinimum(0.0);
+    plotMjjBkg[c]->SetMinimum(1e-5);
     plotMjjBkg[c]->SetMaximum(1.40*plotMjjBkg[c]->GetMaximum());
     plotMjjBkg[c]->GetXaxis()->SetTitle("m_{jj} (GeV)");
     plotMjjBkg[c]->Draw();  
@@ -813,6 +813,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
   RooRealVar *nbkgTruth = new RooRealVar("nbkgTruth","",data->sumEntries());
   RooExtendPdf *BkgTruth = new RooExtendPdf("BkgTruth","",*BkgTruthTmp,*nbkgTruth);
 
+  float n_gen_sr=BkgTruth->createIntegral(RooArgSet(*mGG,*mJJ),Range("sigRegion"))->getVal();
 
   const int Npse = 1000;
   float results[totalNDOF];
@@ -966,25 +967,26 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
 
     if(pulls.size()==0){ pulls.push_back(-9999);  pulls.push_back(-9998);}
     //TH1F *h1 = new TH1F("h1","",50,pulls[0],pulls[pulls.size()-1]);
-    TH1F *h1 = new TH1F("h1","",25,-3,3);
+    TH1F *h1 = new TH1F("h1","",50,-2,2);
     h1->GetXaxis()->SetTitle("pull(N_{bgd}^{SR})");
     for(int i=0; i<pulls.size(); i++) h1->Fill(pulls[i]);
     TCanvas *c0 = new TCanvas("c0","c0",700,500);
-    h1->SetMaximum(h1->GetMaximum()*1.40);
+    h1->SetMaximum(h1->GetMaximum()*1.50);
     h1->Draw();
     TFitResultPtr pullFit;
     if(h1->Integral()>4){
       pullFit = h1->Fit("gaus","s");
       TLatex *lat1  = new TLatex(-2.6,0.85*h1->GetMaximum(),"#splitline{#scale[1.0]{CMS Preliminary}}{#scale[0.8]{#sqrt{s} = 8 TeV}}");
       lat1->Draw();
-      TLatex *lat12 = new TLatex(0.8,0.60*h1->GetMaximum(),TString::Format("#splitline{#scale[1.0]{#mu = %.2f #pm %.2f}}{#scale[1.0]{#sigma = %.2f #pm %.2f}}",pullFit->GetParams()[1],pullFit->GetErrors()[1],pullFit->GetParams()[2],pullFit->GetErrors()[2]));
-      lat12->SetTextColor(kRed);
-      lat12->Draw();
+      //TLatex *lat12 = new TLatex(0.8,0.60*h1->GetMaximum(),TString::Format("#splitline{#scale[1.0]{#mu = %.2f #pm %.2f}}{#scale[1.0]{#sigma = %.2f #pm %.2f}}",pullFit->GetParams()[1],pullFit->GetErrors()[1],pullFit->GetParams()[2],pullFit->GetErrors()[2]));
+      //lat12->SetTextColor(kRed);
+      //lat12->Draw();
       TLatex *lat13 = new TLatex();
       lat13->DrawLatex(0.8,0.91*h1->GetMaximum(),TString::Format("Num PSE: %d",pulls.size()) );
       lat13->DrawLatex(0.8,0.85*h1->GetMaximum(),TString::Format("Gen function: %s",MggBkgTruth->GetName()) );
       lat13->DrawLatex(0.8,0.79*h1->GetMaximum(),TString::Format("Fit function: %s",MggBkgTmp[k]->GetName()) );
       lat13->DrawLatex(0.8,0.73*h1->GetMaximum(),TString::Format("Median = %.2f ",results[k]) );
+      lat13->DrawLatex(0.8,0.67*h1->GetMaximum(),TString::Format("N_{gen}^{SR} = %.2f ",n_gen_sr) );
     }
     else{
       TLatex *lat13 = new TLatex();
@@ -1004,7 +1006,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
 	data->plotOn(frame);
 	MggBkgTruth->plotOn(frame,LineColor(kBlue),Range("fitrange"),NormRange("fitrange"));
 	frame->SetTitle("");
-	frame->SetMinimum(0.0);
+	frame->SetMinimum(1e-5);
 	frame->SetMaximum(1.40*frame->GetMaximum());
 	frame->GetXaxis()->SetTitle("m_{#gamma#gamma} (GeV)");
 	frame->Draw();
@@ -1055,7 +1057,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       RooProdPdf *fitFunc= new RooProdPdf("fitFunc","",RooArgSet(*fitFuncMgg,*fitFuncMjj));
       fitFunc->plotOn(frame,LineColor(kGreen),Range("fitrange"),NormRange("fitrange"));
       frame->SetTitle("");                                                                             
-      frame->SetMinimum(0.0);                                                                          
+      frame->SetMinimum(1e-5);                                                                          
       frame->SetMaximum(1.40*frame->GetMaximum());                                                     
       frame->GetXaxis()->SetTitle("m_{#gamma#gamma} (GeV)");                                           
       frame->Draw();
@@ -1070,10 +1072,10 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       lat->Draw();
       TLatex *lat2 = new TLatex(minMggMassFit+3.0,0.7*frame->GetMaximum(),catdesc.at(c));
       lat2->Draw();
-      TLatex *lat3 = new TLatex();
-      lat3->SetNDC();
-      lat3->DrawLatex(0.62,0.68,TString::Format("#chi^{2}/N = %.2f",mcs->fitParams(i)->getRealValue("chi2")/mcs->fitParams(i)->getRealValue("ndof")));
-      lat3->DrawLatex(0.62,0.62,TString::Format("p(#chi^{2},N) = %.2f",mcs->fitParams(i)->getRealValue("prob")));
+      //TLatex *lat3 = new TLatex();
+      //lat3->SetNDC();
+      //lat3->DrawLatex(0.62,0.68,TString::Format("#chi^{2}/N = %.2f",mcs->fitParams(i)->getRealValue("chi2")/mcs->fitParams(i)->getRealValue("ndof")));
+      //lat3->DrawLatex(0.62,0.62,TString::Format("p(#chi^{2},N) = %.2f",mcs->fitParams(i)->getRealValue("prob")));
     }
     c1->SaveAs(TString::Format("plots/toymc2D_Mgg_gen%s%s_fitN%d_cat%d.png",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),k+1,c));
 
@@ -1086,7 +1088,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
 	data->plotOn(frame);
 	MjjBkgTruth->plotOn(frame,LineColor(kBlue),Range("fitrange"),NormRange("fitrange"));
 	frame->SetTitle("");
-	frame->SetMinimum(0.0);
+	frame->SetMinimum(1e-5);
 	frame->SetMaximum(1.40*frame->GetMaximum());
 	frame->GetXaxis()->SetTitle("m_{jj} (GeV)");
 	frame->Draw();
@@ -1097,9 +1099,9 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
 	legmc->SetBorderSize(0);
 	legmc->SetFillStyle(0);
 	legmc->Draw();    
-	TLatex *lat  = new TLatex(minMggMassFit+3.0,0.85*frame->GetMaximum(),"#splitline{#scale[1.0]{CMS Preliminary}}{#scale[0.8]{#sqrt{s} = 8 TeV}}");
+	TLatex *lat  = new TLatex(minMjjMassFit+3.0,0.85*frame->GetMaximum(),"#splitline{#scale[1.0]{CMS Preliminary}}{#scale[0.8]{#sqrt{s} = 8 TeV}}");
 	lat->Draw();
-	TLatex *lat2 = new TLatex(minMggMassFit+3.0,0.7*frame->GetMaximum(),catdesc.at(c));
+	TLatex *lat2 = new TLatex(minMjjMassFit+3.0,0.7*frame->GetMaximum(),catdesc.at(c));
 	lat2->Draw();
 
 	continue;
@@ -1137,7 +1139,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       RooProdPdf *fitFunc= new RooProdPdf("fitFunc","",RooArgSet(*fitFuncMgg,*fitFuncMjj));
       fitFunc->plotOn(frame,LineColor(kGreen),Range("fitrange"),NormRange("fitrange"));
       frame->SetTitle("");                                                                             
-      frame->SetMinimum(0.0);                                                                          
+      frame->SetMinimum(1e-5);                                                                          
       frame->SetMaximum(1.40*frame->GetMaximum());                                                     
       frame->GetXaxis()->SetTitle("m_{jj} (GeV)");                                           
       frame->Draw();
@@ -1148,14 +1150,14 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       legmc->SetBorderSize(0);
       legmc->SetFillStyle(0);
       legmc->Draw();    
-      TLatex *lat  = new TLatex(minMggMassFit+3.0,0.85*frame->GetMaximum(),"#splitline{#scale[1.0]{CMS Preliminary}}{#scale[0.8]{#sqrt{s} = 8 TeV}}");
+      TLatex *lat  = new TLatex(minMjjMassFit+3.0,0.85*frame->GetMaximum(),"#splitline{#scale[1.0]{CMS Preliminary}}{#scale[0.8]{#sqrt{s} = 8 TeV}}");
       lat->Draw();
-      TLatex *lat2 = new TLatex(minMggMassFit+3.0,0.7*frame->GetMaximum(),catdesc.at(c));
+      TLatex *lat2 = new TLatex(minMjjMassFit+3.0,0.7*frame->GetMaximum(),catdesc.at(c));
       lat2->Draw();
-      TLatex *lat3 = new TLatex();
-      lat3->SetNDC();
-      lat3->DrawLatex(0.62,0.68,TString::Format("#chi^{2}/N = %.2f",mcs->fitParams(i)->getRealValue("chi2")/mcs->fitParams(i)->getRealValue("ndof")));
-      lat3->DrawLatex(0.62,0.62,TString::Format("p(#chi^{2},N) = %.2f",mcs->fitParams(i)->getRealValue("prob")));
+      //TLatex *lat3 = new TLatex();
+      //lat3->SetNDC();
+      //lat3->DrawLatex(0.62,0.68,TString::Format("#chi^{2}/N = %.2f",mcs->fitParams(i)->getRealValue("chi2")/mcs->fitParams(i)->getRealValue("ndof")));
+      //lat3->DrawLatex(0.62,0.62,TString::Format("p(#chi^{2},N) = %.2f",mcs->fitParams(i)->getRealValue("prob")));
     }
     c2->SaveAs(TString::Format("plots/toymc2D_Mjj_gen%s%s_fitN%d_cat%d.png",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),k+1,c));
 
