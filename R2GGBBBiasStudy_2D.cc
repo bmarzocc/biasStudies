@@ -435,8 +435,8 @@ RooAbsPdf *BkgMggModelFit(RooWorkspace* w, int c, int modelNum) {
     plotMggBkg[c]->Draw();  
 
     TLegend *legmc = new TLegend(0.62,0.75,0.92,0.9);
-    legmc->AddEntry(plotMggBkg[c]->getObject(2),"Weighted CS","LPE");
-    legmc->AddEntry(plotMggBkg[c]->getObject(1),"Bkg Model","L");
+    legmc->AddEntry(plotMggBkg[c]->getObject(2),"Data CS","LPE");
+    legmc->AddEntry(plotMggBkg[c]->getObject(1),TString::Format("%.5s Truth",MggBkgTmp[i]->GetName()),"L");
     legmc->SetBorderSize(0);
     legmc->SetFillStyle(0);
     legmc->Draw();    
@@ -446,14 +446,14 @@ RooAbsPdf *BkgMggModelFit(RooWorkspace* w, int c, int modelNum) {
     TLatex *lat2 = new TLatex(minMassFit+3.0,0.7*plotMggBkg[c]->GetMaximum(),catdesc.at(c));
     lat2->Draw();
  
-    ctmp->SaveAs(TString::Format("plots/dataBkg2DMgg_%sN%i_cat%d.png",fitName,i+(modelNum!=0),c));
-    ctmp->SaveAs(TString::Format("plots/dataBkg2DMgg_%sN%i_cat%d.pdf",fitName,i+(modelNum!=0),c));
+    ctmp->SaveAs(TString::Format("plots/dataBkgMgg_%.5s_cat%d.png",MggBkgTmp[i],c));
+    ctmp->SaveAs(TString::Format("plots/dataBkgMgg_%.5s_cat%d.pdf",MggBkgTmp[i],c));
 
     if(i>0){
       float chi2 = 2*(minNLL[i-1]-minNLL[i]);
       int chi2dof = NDOF[i]-NDOF[i-1];
       chi2prob[i-1] = chi2<0 ? 1.0 : TMath::Prob(chi2,chi2dof);
-      if(chi2prob[i-1]>0.05 && (modelNum!=0 || i!=1) ) breakLoop=true;
+      if(chi2prob[i-1]>0.05 ) breakLoop=true;
     }
     if(data[c]->sumEntries()-1<=NDOF[i]) breakLoop=true;
     if(!breakLoop)
@@ -695,8 +695,8 @@ RooAbsPdf *BkgMjjModelFit(RooWorkspace* w, int c, int modelNum) {
     plotMjjBkg[c]->Draw();  
 
     TLegend *legmc = new TLegend(0.62,0.75,0.92,0.9);
-    legmc->AddEntry(plotMjjBkg[c]->getObject(2),"Weighted CS","LPE");
-    legmc->AddEntry(plotMjjBkg[c]->getObject(1),"Bkg Model","L");
+    legmc->AddEntry(plotMjjBkg[c]->getObject(2),"Data CS","LPE");
+    legmc->AddEntry(plotMjjBkg[c]->getObject(1),TString::Format("%.5s Truth",MjjBkgTmp[i]->GetName()),"L");
     legmc->SetBorderSize(0);
     legmc->SetFillStyle(0);
     legmc->Draw();    
@@ -706,14 +706,14 @@ RooAbsPdf *BkgMjjModelFit(RooWorkspace* w, int c, int modelNum) {
     TLatex *lat2 = new TLatex(minMassFit+3.0,0.7*plotMjjBkg[c]->GetMaximum(),catdesc.at(c));
     lat2->Draw();
  
-    ctmp->SaveAs(TString::Format("plots/dataBkg2DMjj_%sN%i_cat%d.png",fitName,i+(modelNum!=0),c));
-    ctmp->SaveAs(TString::Format("plots/dataBkg2DMjj_%sN%i_cat%d.pdf",fitName,i+(modelNum!=0),c));
+    ctmp->SaveAs(TString::Format("plots/dataBkgMjj_%.5s_cat%d.png",MjjBkgTmp[i],c));
+    ctmp->SaveAs(TString::Format("plots/dataBkgMjj_%.5s_cat%d.pdf",MjjBkgTmp[i],c));
 
     if(i>0){
       float chi2 = 2*(minNLL[i-1]-minNLL[i]);
       int chi2dof = NDOF[i]-NDOF[i-1];
       chi2prob[i-1] = chi2<0 ? 1.0 : TMath::Prob(chi2,chi2dof);
-      if(chi2prob[i-1]>0.05 && (modelNum!=0 || i!=1) ) breakLoop=true;
+      if(chi2prob[i-1]>0.05 ) breakLoop=true;
     }
     if(data[c]->sumEntries()-1<=NDOF[i]) breakLoop=true;
     if(!breakLoop)
@@ -787,20 +787,20 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
   const int totalNDOF=7;
   RooAbsPdf* MggBkgTmp[totalNDOF] = {0};
   RooAbsPdf* MjjBkgTmp[totalNDOF] = {0};
-  MggBkgTmp[0] = new RooExponential(TString::Format("MggExp%d",1), "", *mGG,*p8);
-  MggBkgTmp[1] = new RooGenericPdf("MggPow1","pow(@0,@1)",RooArgList(*mGG,*p8));
-  MggBkgTmp[2] = new RooBernstein(TString::Format("MggPol%d",1), "", *mGG,RooArgList(*p0,*p1));
-  MggBkgTmp[3] = new RooBernstein(TString::Format("MggPol%d",1), "", *mGG,RooArgList(*p0,*p1));
-  MggBkgTmp[4] = new RooBernstein(TString::Format("MggPol%d",1), "", *mGG,RooArgList(*p0,*p1));
-  MggBkgTmp[5] = new RooBernstein(TString::Format("MggPol%d",1), "", *mGG,RooArgList(*p0,*p1));
-  MggBkgTmp[6] = new RooBernstein(TString::Format("MggPol%d",1), "", *mGG,RooArgList(*p0,*p1,*p2));
-  MjjBkgTmp[0] = new RooExponential(TString::Format("MjjExp%d",1), "", *mJJ,*p9);
-  MjjBkgTmp[1] = new RooGenericPdf("MjjPow1","pow(@0,@1)",RooArgList(*mJJ,*p9));
-  MjjBkgTmp[2] = new RooBernstein(TString::Format("MjjPol%d",1), "", *mJJ,RooArgList(*p4,*p5));
-  MjjBkgTmp[3] = new RooBernstein(TString::Format("MjjPol%d",2), "", *mJJ,RooArgList(*p4,*p5,*p6));
-  MjjBkgTmp[4] = new RooBernstein(TString::Format("MjjPol%d",3), "", *mJJ,RooArgList(*p4,*p5,*p6,*p7));
-  MjjBkgTmp[5] = new RooBernstein(TString::Format("MjjPol%d",3), "", *mJJ,RooArgList(*p4,*p5,*p6,*p7,*p3));
-  MjjBkgTmp[6] = new RooBernstein(TString::Format("MjjPol%d",3), "", *mJJ,RooArgList(*p4,*p5));
+  MggBkgTmp[0] = new RooExponential(TString::Format("ExpN%dMggCand",1), "", *mGG,*p8);
+  MggBkgTmp[1] = new RooGenericPdf("PowN1MggCand","pow(@0,@1)",RooArgList(*mGG,*p8));
+  MggBkgTmp[2] = new RooBernstein(TString::Format("BerN%dMggCand",1), "", *mGG,RooArgList(*p0,*p1));
+  MggBkgTmp[3] = new RooBernstein(TString::Format("BerN%dMggCand",1), "", *mGG,RooArgList(*p0,*p1));
+  MggBkgTmp[4] = new RooBernstein(TString::Format("BerN%dMggCand",1), "", *mGG,RooArgList(*p0,*p1));
+  MggBkgTmp[5] = new RooBernstein(TString::Format("BerN%dMggCand",1), "", *mGG,RooArgList(*p0,*p1));
+  MggBkgTmp[6] = new RooBernstein(TString::Format("BerN%dMggCand",1), "", *mGG,RooArgList(*p0,*p1,*p2));
+  MjjBkgTmp[0] = new RooExponential(TString::Format("ExpN%dMjjCand",1), "", *mJJ,*p9);
+  MjjBkgTmp[1] = new RooGenericPdf("PowN1MjjCand","pow(@0,@1)",RooArgList(*mJJ,*p9));
+  MjjBkgTmp[2] = new RooBernstein(TString::Format("BerN%dMjjCand",1), "", *mJJ,RooArgList(*p4,*p5));
+  MjjBkgTmp[3] = new RooBernstein(TString::Format("BerN%dMjjCand",2), "", *mJJ,RooArgList(*p4,*p5,*p6));
+  MjjBkgTmp[4] = new RooBernstein(TString::Format("BerN%dMjjCand",3), "", *mJJ,RooArgList(*p4,*p5,*p6,*p7));
+  MjjBkgTmp[5] = new RooBernstein(TString::Format("BerN%dMjjCand",3), "", *mJJ,RooArgList(*p4,*p5,*p6,*p7,*p3));
+  MjjBkgTmp[6] = new RooBernstein(TString::Format("BerN%dMjjCand",3), "", *mJJ,RooArgList(*p4,*p5));
 
 
   //if(MggBkgTruth->GetName()[0]=='B' && MjjBkgTruth->GetName()[0]=='B'){
@@ -990,11 +990,11 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       //lat12->SetTextColor(kRed);
       //lat12->Draw();
       TLatex *lat13 = new TLatex();
-      lat13->DrawLatex(h1_low+0.3,0.91*h1->GetMaximum(),TString::Format("Num PSE: %d",pulls.size()) );
-      lat13->DrawLatex(h1_low+0.3,0.85*h1->GetMaximum(),TString::Format("Gen function: %s",MggBkgTruth->GetName()) );
-      lat13->DrawLatex(h1_low+0.3,0.79*h1->GetMaximum(),TString::Format("Fit function: %s",MggBkgTmp[k]->GetName()) );
-      lat13->DrawLatex(h1_low+0.3,0.73*h1->GetMaximum(),TString::Format("Median = %.2f ",results[k]) );
-      lat13->DrawLatex(h1_low+0.3,0.67*h1->GetMaximum(),TString::Format("N_{gen}^{SR} = %.2f ",n_gen_sr) );
+      lat13->DrawLatex(h1_low+0.15,0.91*h1->GetMaximum(),TString::Format("Num PSE: %d",pulls.size()) );
+      lat13->DrawLatex(h1_low+0.15,0.85*h1->GetMaximum(),TString::Format("Gen function: %.5s,%.5s",MggBkgTruth->GetName(),MjjBkgTruth->GetName()) );
+      lat13->DrawLatex(h1_low+0.15,0.79*h1->GetMaximum(),TString::Format("Fit function: %.5s,%.5s",MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName()) );
+      lat13->DrawLatex(h1_low+0.15,0.73*h1->GetMaximum(),TString::Format("Median = %.2f ",results[k]) );
+      lat13->DrawLatex(h1_low+0.15,0.67*h1->GetMaximum(),TString::Format("N_{gen}^{SR} = %.2f ",n_gen_sr) );
     }
     else{
       TLatex *lat13 = new TLatex();
@@ -1002,8 +1002,8 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       lat13->DrawLatex(0.0,0.4,TString::Format("Median = %.2f ",results[k])  );
     }
 
-    c0->SaveAs(TString::Format("plots/pulls2D_gen%s%s_fitN%d_cat%d.png",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),k+1,c));  
-    c0->SaveAs(TString::Format("plots/pulls2D_gen%s%s_fitN%d_cat%d.pdf",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),k+1,c));  
+    c0->SaveAs(TString::Format("plots/pulls2D_gen%.5s%.5s_fit%.5s%.5s_cat%d.png",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c));  
+    c0->SaveAs(TString::Format("plots/pulls2D_gen%.5s%.5s_fit%.5s%.5s_cat%d.pdf",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c));  
 
     TCanvas *c1 = new TCanvas("c1","c1",1200,1200);
     c1->Divide(3,3);
@@ -1020,8 +1020,8 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
 	frame->Draw();
 
 	TLegend *legmc = new TLegend(0.62,0.75,0.92,0.9);
-	legmc->AddEntry(frame->getObject(0),"Weighted CS","LPE");
-	legmc->AddEntry(frame->getObject(1),"Bkg Model","L");
+	legmc->AddEntry(frame->getObject(0),"Data CS","LPE");
+	legmc->AddEntry(frame->getObject(1),TString::Format("%.5s Truth",MggBkgTruth->GetName()),"L");
 	legmc->SetBorderSize(0);
 	legmc->SetFillStyle(0);
 	legmc->Draw();    
@@ -1072,7 +1072,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
 
       TLegend *legmc = new TLegend(0.62,0.75,0.92,0.9);
       legmc->AddEntry(frame->getObject(0),TString::Format("Gen PSE #%i",i-1),"LPE");
-      legmc->AddEntry(frame->getObject(1),"Bkg Model","L");
+      legmc->AddEntry(frame->getObject(1),TString::Format("%.5s Candidate",MggBkgTmp[k]->GetName()),"L");
       legmc->SetBorderSize(0);
       legmc->SetFillStyle(0);
       legmc->Draw();    
@@ -1085,7 +1085,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       //lat3->DrawLatex(0.62,0.68,TString::Format("#chi^{2}/N = %.2f",mcs->fitParams(i)->getRealValue("chi2")/mcs->fitParams(i)->getRealValue("ndof")));
       //lat3->DrawLatex(0.62,0.62,TString::Format("p(#chi^{2},N) = %.2f",mcs->fitParams(i)->getRealValue("prob")));
     }
-    c1->SaveAs(TString::Format("plots/toymc2D_Mgg_gen%s%s_fitN%d_cat%d.png",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),k+1,c));
+    c1->SaveAs(TString::Format("plots/toymc2D_Mgg_gen%.5s%.5s_fit%.5s%.5s_cat%d.png",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c));
 
     TCanvas *c2 = new TCanvas("c2","c2",1200,1200);
     c2->Divide(3,3);
@@ -1102,8 +1102,8 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
 	frame->Draw();
 
 	TLegend *legmc = new TLegend(0.62,0.75,0.92,0.9);
-	legmc->AddEntry(frame->getObject(0),"Weighted CS","LPE");
-	legmc->AddEntry(frame->getObject(1),"Bkg Model","L");
+	legmc->AddEntry(frame->getObject(0),"Data CS","LPE");
+	legmc->AddEntry(frame->getObject(1),TString::Format("%.5s Truth",MjjBkgTruth->GetName()),"L");
 	legmc->SetBorderSize(0);
 	legmc->SetFillStyle(0);
 	legmc->Draw();    
@@ -1154,7 +1154,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
 
       TLegend *legmc = new TLegend(0.62,0.75,0.92,0.9);
       legmc->AddEntry(frame->getObject(0),TString::Format("Gen PSE #%i",i-1),"LPE");
-      legmc->AddEntry(frame->getObject(1),"Bkg Model","L");
+      legmc->AddEntry(frame->getObject(1),TString::Format("%.5s Candidate",MjjBkgTmp[k]->GetName()),"L");
       legmc->SetBorderSize(0);
       legmc->SetFillStyle(0);
       legmc->Draw();    
@@ -1167,13 +1167,13 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       //lat3->DrawLatex(0.62,0.68,TString::Format("#chi^{2}/N = %.2f",mcs->fitParams(i)->getRealValue("chi2")/mcs->fitParams(i)->getRealValue("ndof")));
       //lat3->DrawLatex(0.62,0.62,TString::Format("p(#chi^{2},N) = %.2f",mcs->fitParams(i)->getRealValue("prob")));
     }
-    c2->SaveAs(TString::Format("plots/toymc2D_Mjj_gen%s%s_fitN%d_cat%d.png",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),k+1,c));
+    c2->SaveAs(TString::Format("plots/toymc2D_Mjj_gen%.5s%.5s_fit%.5s%.5s_cat%d.png",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c));
 
     delete mcs;
   }
 
-  fprintf(fout,"resMass=%d,cat%d,withCorr=%d\t%s,%s\t%6.3f\t%6.3f\t%6.3f\t%6.3f\t%6.3f\t%6.3f\t%6.3f\n",resMass,c,withCorr,MggBkgTruth->GetName(),MjjBkgTruth->GetName(),results[0],results[1],results[2],results[3],results[4],results[5],results[6]);
-  fprintf(foutCorr,"resMass=%d,cat%d,withCorr=%d\t%s,%s\t%.4f +/- %.4f\n",resMass,c,withCorr,MggBkgTruth->GetName(),MjjBkgTruth->GetName(),corrHist->GetMean(),effSigma(corrHist));
+  fprintf(fout,"resMass=%d,cat%d,withCorr=%d\t%.5s,%.5s\t%6.3f\t%6.3f\t%6.3f\t%6.3f\t%6.3f\t%6.3f\t%6.3f\n",resMass,c,withCorr,MggBkgTruth->GetName(),MjjBkgTruth->GetName(),results[0],results[1],results[2],results[3],results[4],results[5],results[6]);
+  fprintf(foutCorr,"resMass=%d,cat%d,withCorr=%d\t%.5s,%.5s\t%.4f +/- %.4f\n",resMass,c,withCorr,MggBkgTruth->GetName(),MjjBkgTruth->GetName(),corrHist->GetMean(),effSigma(corrHist));
 
   return;
 }
