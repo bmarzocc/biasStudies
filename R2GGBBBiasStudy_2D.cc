@@ -446,8 +446,8 @@ RooAbsPdf *BkgMggModelFit(RooWorkspace* w, int c, int modelNum) {
     TLatex *lat2 = new TLatex(minMassFit+3.0,0.7*plotMggBkg[c]->GetMaximum(),catdesc.at(c));
     lat2->Draw();
  
-    ctmp->SaveAs(TString::Format("plots/dataBkgMgg_%.5s_cat%d.png",MggBkgTmp[i],c));
-    ctmp->SaveAs(TString::Format("plots/dataBkgMgg_%.5s_cat%d.pdf",MggBkgTmp[i],c));
+    ctmp->SaveAs(TString::Format("plots/dataBkgMgg_%.5s_cat%d.png",MggBkgTmp[i]->GetName(),c));
+    ctmp->SaveAs(TString::Format("plots/dataBkgMgg_%.5s_cat%d.pdf",MggBkgTmp[i]->GetName(),c));
 
     if(i>0){
       float chi2 = 2*(minNLL[i-1]-minNLL[i]);
@@ -706,8 +706,8 @@ RooAbsPdf *BkgMjjModelFit(RooWorkspace* w, int c, int modelNum) {
     TLatex *lat2 = new TLatex(minMassFit+3.0,0.7*plotMjjBkg[c]->GetMaximum(),catdesc.at(c));
     lat2->Draw();
  
-    ctmp->SaveAs(TString::Format("plots/dataBkgMjj_%.5s_cat%d.png",MjjBkgTmp[i],c));
-    ctmp->SaveAs(TString::Format("plots/dataBkgMjj_%.5s_cat%d.pdf",MjjBkgTmp[i],c));
+    ctmp->SaveAs(TString::Format("plots/dataBkgMjj_%.5s_cat%d.png",MjjBkgTmp[i]->GetName(),c));
+    ctmp->SaveAs(TString::Format("plots/dataBkgMjj_%.5s_cat%d.pdf",MjjBkgTmp[i]->GetName(),c));
 
     if(i>0){
       float chi2 = 2*(minNLL[i-1]-minNLL[i]);
@@ -793,14 +793,14 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
   MggBkgTmp[3] = new RooBernstein(TString::Format("BerN%dMggCand",1), "", *mGG,RooArgList(*p0,*p1));
   MggBkgTmp[4] = new RooBernstein(TString::Format("BerN%dMggCand",1), "", *mGG,RooArgList(*p0,*p1));
   MggBkgTmp[5] = new RooBernstein(TString::Format("BerN%dMggCand",1), "", *mGG,RooArgList(*p0,*p1));
-  MggBkgTmp[6] = new RooBernstein(TString::Format("BerN%dMggCand",1), "", *mGG,RooArgList(*p0,*p1,*p2));
+  MggBkgTmp[6] = new RooBernstein(TString::Format("BerN%dMggCand",2), "", *mGG,RooArgList(*p0,*p1,*p2));
   MjjBkgTmp[0] = new RooExponential(TString::Format("ExpN%dMjjCand",1), "", *mJJ,*p9);
   MjjBkgTmp[1] = new RooGenericPdf("PowN1MjjCand","pow(@0,@1)",RooArgList(*mJJ,*p9));
   MjjBkgTmp[2] = new RooBernstein(TString::Format("BerN%dMjjCand",1), "", *mJJ,RooArgList(*p4,*p5));
   MjjBkgTmp[3] = new RooBernstein(TString::Format("BerN%dMjjCand",2), "", *mJJ,RooArgList(*p4,*p5,*p6));
   MjjBkgTmp[4] = new RooBernstein(TString::Format("BerN%dMjjCand",3), "", *mJJ,RooArgList(*p4,*p5,*p6,*p7));
-  MjjBkgTmp[5] = new RooBernstein(TString::Format("BerN%dMjjCand",3), "", *mJJ,RooArgList(*p4,*p5,*p6,*p7,*p3));
-  MjjBkgTmp[6] = new RooBernstein(TString::Format("BerN%dMjjCand",3), "", *mJJ,RooArgList(*p4,*p5));
+  MjjBkgTmp[5] = new RooBernstein(TString::Format("BerN%dMjjCand",4), "", *mJJ,RooArgList(*p4,*p5,*p6,*p7,*p3));
+  MjjBkgTmp[6] = new RooBernstein(TString::Format("BerN%dMjjCand",1), "", *mJJ,RooArgList(*p4,*p5));
 
 
   //if(MggBkgTruth->GetName()[0]=='B' && MjjBkgTruth->GetName()[0]=='B'){
@@ -1086,6 +1086,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       //lat3->DrawLatex(0.62,0.62,TString::Format("p(#chi^{2},N) = %.2f",mcs->fitParams(i)->getRealValue("prob")));
     }
     c1->SaveAs(TString::Format("plots/toymc2D_Mgg_gen%.5s%.5s_fit%.5s%.5s_cat%d.png",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c));
+    c1->SaveAs(TString::Format("plots/toymc2D_Mgg_gen%.5s%.5s_fit%.5s%.5s_cat%d.pdf",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c));
 
     TCanvas *c2 = new TCanvas("c2","c2",1200,1200);
     c2->Divide(3,3);
@@ -1168,6 +1169,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       //lat3->DrawLatex(0.62,0.62,TString::Format("p(#chi^{2},N) = %.2f",mcs->fitParams(i)->getRealValue("prob")));
     }
     c2->SaveAs(TString::Format("plots/toymc2D_Mjj_gen%.5s%.5s_fit%.5s%.5s_cat%d.png",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c));
+    c2->SaveAs(TString::Format("plots/toymc2D_Mjj_gen%.5s%.5s_fit%.5s%.5s_cat%d.pdf",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c));
 
     delete mcs;
   }
