@@ -966,8 +966,16 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       results[k] = pulls[pulls.size()/2];
 
     if(pulls.size()==0){ pulls.push_back(-9999);  pulls.push_back(-9998);}
-    //TH1F *h1 = new TH1F("h1","",50,pulls[0],pulls[pulls.size()-1]);
-    TH1F *h1 = new TH1F("h1","",50,-2,2);
+    float h1_low=0, h1_high=0;
+    if (c==0 || c==2){
+      h1_low=-1;
+      h1_high=1;
+    }
+    else{
+      h1_low=-2;
+      h1_high=2;
+    }
+    TH1F *h1 = new TH1F("h1","",50,h1_low,h1_high);
     h1->GetXaxis()->SetTitle("pull(N_{bgd}^{SR})");
     for(int i=0; i<pulls.size(); i++) h1->Fill(pulls[i]);
     TCanvas *c0 = new TCanvas("c0","c0",700,500);
@@ -976,17 +984,17 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
     TFitResultPtr pullFit;
     if(h1->Integral()>4){
       //pullFit = h1->Fit("gaus","s");
-      TLatex *lat1  = new TLatex(-2.6,0.85*h1->GetMaximum(),"#splitline{#scale[1.0]{CMS Preliminary}}{#scale[0.8]{#sqrt{s} = 8 TeV}}");
-      lat1->Draw();
+      TLatex *lat1  = new TLatex(h1_low+0.3,0.85*h1->GetMaximum(),"#splitline{#scale[1.0]{CMS Preliminary}}{#scale[0.8]{#sqrt{s} = 8 TeV}}");
+      //lat1->Draw();
       //TLatex *lat12 = new TLatex(0.8,0.60*h1->GetMaximum(),TString::Format("#splitline{#scale[1.0]{#mu = %.2f #pm %.2f}}{#scale[1.0]{#sigma = %.2f #pm %.2f}}",pullFit->GetParams()[1],pullFit->GetErrors()[1],pullFit->GetParams()[2],pullFit->GetErrors()[2]));
       //lat12->SetTextColor(kRed);
       //lat12->Draw();
       TLatex *lat13 = new TLatex();
-      lat13->DrawLatex(0.8,0.91*h1->GetMaximum(),TString::Format("Num PSE: %d",pulls.size()) );
-      lat13->DrawLatex(0.8,0.85*h1->GetMaximum(),TString::Format("Gen function: %s",MggBkgTruth->GetName()) );
-      lat13->DrawLatex(0.8,0.79*h1->GetMaximum(),TString::Format("Fit function: %s",MggBkgTmp[k]->GetName()) );
-      lat13->DrawLatex(0.8,0.73*h1->GetMaximum(),TString::Format("Median = %.2f ",results[k]) );
-      lat13->DrawLatex(0.8,0.67*h1->GetMaximum(),TString::Format("N_{gen}^{SR} = %.2f ",n_gen_sr) );
+      lat13->DrawLatex(h1_low+0.3,0.91*h1->GetMaximum(),TString::Format("Num PSE: %d",pulls.size()) );
+      lat13->DrawLatex(h1_low+0.3,0.85*h1->GetMaximum(),TString::Format("Gen function: %s",MggBkgTruth->GetName()) );
+      lat13->DrawLatex(h1_low+0.3,0.79*h1->GetMaximum(),TString::Format("Fit function: %s",MggBkgTmp[k]->GetName()) );
+      lat13->DrawLatex(h1_low+0.3,0.73*h1->GetMaximum(),TString::Format("Median = %.2f ",results[k]) );
+      lat13->DrawLatex(h1_low+0.3,0.67*h1->GetMaximum(),TString::Format("N_{gen}^{SR} = %.2f ",n_gen_sr) );
     }
     else{
       TLatex *lat13 = new TLatex();
