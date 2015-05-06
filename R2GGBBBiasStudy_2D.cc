@@ -434,7 +434,7 @@ RooAbsPdf *BkgMggModelFit(RooWorkspace* w, int c, int modelNum) {
     plotMggBkg[c]->GetXaxis()->SetTitle("m_{#gamma#gamma} (GeV)");
     plotMggBkg[c]->Draw();  
 
-    TLegend *legmc = new TLegend(0.62,0.75,0.92,0.9);
+    TLegend *legmc = new TLegend(0.55,0.75,0.98,0.9);
     legmc->AddEntry(plotMggBkg[c]->getObject(2),"Data CS","LPE");
     legmc->AddEntry(plotMggBkg[c]->getObject(1),TString::Format("%.5s Truth",MggBkgTmp[i]->GetName()),"L");
     legmc->SetBorderSize(0);
@@ -694,7 +694,7 @@ RooAbsPdf *BkgMjjModelFit(RooWorkspace* w, int c, int modelNum) {
     plotMjjBkg[c]->GetXaxis()->SetTitle("m_{jj} (GeV)");
     plotMjjBkg[c]->Draw();  
 
-    TLegend *legmc = new TLegend(0.62,0.75,0.92,0.9);
+    TLegend *legmc = new TLegend(0.55,0.75,0.98,0.9);
     legmc->AddEntry(plotMjjBkg[c]->getObject(2),"Data CS","LPE");
     legmc->AddEntry(plotMjjBkg[c]->getObject(1),TString::Format("%.5s Truth",MjjBkgTmp[i]->GetName()),"L");
     legmc->SetBorderSize(0);
@@ -1019,7 +1019,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
 	frame->GetXaxis()->SetTitle("m_{#gamma#gamma} (GeV)");
 	frame->Draw();
 
-	TLegend *legmc = new TLegend(0.62,0.75,0.92,0.9);
+	TLegend *legmc = new TLegend(0.55,0.75,0.98,0.9);
 	legmc->AddEntry(frame->getObject(0),"Data CS","LPE");
 	legmc->AddEntry(frame->getObject(1),TString::Format("%.5s Truth",MggBkgTruth->GetName()),"L");
 	legmc->SetBorderSize(0);
@@ -1070,7 +1070,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       frame->GetXaxis()->SetTitle("m_{#gamma#gamma} (GeV)");                                           
       frame->Draw();
 
-      TLegend *legmc = new TLegend(0.62,0.75,0.92,0.9);
+      TLegend *legmc = new TLegend(0.52,0.75,0.99,0.9);
       legmc->AddEntry(frame->getObject(0),TString::Format("Gen PSE #%i",i-1),"LPE");
       legmc->AddEntry(frame->getObject(1),TString::Format("%.5s Candidate",MggBkgTmp[k]->GetName()),"L");
       legmc->SetBorderSize(0);
@@ -1102,7 +1102,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
 	frame->GetXaxis()->SetTitle("m_{jj} (GeV)");
 	frame->Draw();
 
-	TLegend *legmc = new TLegend(0.62,0.75,0.92,0.9);
+	TLegend *legmc = new TLegend(0.55,0.75,0.98,0.9);
 	legmc->AddEntry(frame->getObject(0),"Data CS","LPE");
 	legmc->AddEntry(frame->getObject(1),TString::Format("%.5s Truth",MjjBkgTruth->GetName()),"L");
 	legmc->SetBorderSize(0);
@@ -1153,7 +1153,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       frame->GetXaxis()->SetTitle("m_{jj} (GeV)");                                           
       frame->Draw();
 
-      TLegend *legmc = new TLegend(0.62,0.75,0.92,0.9);
+      TLegend *legmc = new TLegend(0.52,0.75,0.99,0.9);
       legmc->AddEntry(frame->getObject(0),TString::Format("Gen PSE #%i",i-1),"LPE");
       legmc->AddEntry(frame->getObject(1),TString::Format("%.5s Candidate",MjjBkgTmp[k]->GetName()),"L");
       legmc->SetBorderSize(0);
