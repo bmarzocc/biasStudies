@@ -813,7 +813,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
   RooRealVar *nbkgTruth = new RooRealVar("nbkgTruth","",data->sumEntries());
   RooExtendPdf *BkgTruth = new RooExtendPdf("BkgTruth","",*BkgTruthTmp,*nbkgTruth);
 
-  float n_gen_sr=BkgTruth->createIntegral(RooArgSet(*mGG,*mJJ),Range("sigRegion"))->getVal();
+  float n_gen_sr=BkgTruth->createIntegral(RooArgSet(*mGG,*mJJ),NormSet(RooArgSet(*mGG,*mJJ)),Range("sigRegion"))->getVal()*nbkgTruth->getVal();
 
   const int Npse = 1000;
   float results[totalNDOF];
