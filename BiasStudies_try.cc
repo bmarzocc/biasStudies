@@ -148,20 +148,20 @@ int main(int argc, const char* argv[])
   RooRealVar nbkg_truth("nbkg_truth","#background events",nEvents,0.5*nEvents,1.5*nEvents) ; 
   RooAddPdf BkgTruth("BkgTruth","",RooArgList(gauss,BkgTruthTmp),RooArgList(nsig_truth,nbkg_truth)) ; */
 
-  /*RooMCStudy * mcs = new RooMCStudy(BkgTruth, RooArgSet(mes), FitModel(sum),Silence(), Extended(kTRUE), Binned(kFALSE),
+  RooMCStudy * mcs = new RooMCStudy(BkgTruth, RooArgSet(mes), FitModel(sum),Silence(), Extended(kTRUE), Binned(kFALSE),
     				      FitOptions(Range(100.,180.), Save(kFALSE), SumW2Error(kTRUE),
     						 ExternalConstraints(RooArgSet(nsig_constraint,nbkg_constraint )) ));
 
   RooChi2MCSModule chi2mod;
   mcs->addModule(chi2mod);
 
-  mcs->generateAndFit(Npse,nEvents,kTRUE);*/
+  mcs->generateAndFit(Npse,nEvents,kTRUE);
 
   std::vector<float> pulls;
   pulls.clear();
   
   for(int ii = 0; ii < Npse; ii++){
-      /*float pull;
+      float pull;
       const RooAbsData* genDataset = mcs->genData(ii);
       float fitN = mcs->fitParams(ii)->getRealValue("nsig");
       float fitNerr = mcs->fitParams(ii)->getRealValue("nsigerr");
@@ -169,8 +169,8 @@ int main(int argc, const char* argv[])
       h_pulls->Fill(pull);
       pulls.push_back(pull);
 
-      std::cout << "TOY = " << ii << " , nsig = " << fitN << " , nsigErr = " << fitNerr << " , pull = "   << pull << " , nEvents = " << genDataset->sumEntries() << std::endl;*/
-      TRandom Poisson(0);
+      std::cout << "TOY = " << ii << " , nsig = " << fitN << " , nsigErr = " << fitNerr << " , pull = "   << pull << " , nEvents = " << genDataset->sumEntries() << std::endl;
+      /*TRandom Poisson(0);
       int nEventsSmear = Poisson.Poisson(nEvents);
       float pull;
       // --- Generate a toyMC sample from composite PDF --- 
@@ -181,7 +181,7 @@ int main(int argc, const char* argv[])
       h_pulls->Fill(pull);
       pulls.push_back(pull);
 
-      std::cout << "TOY = " << ii << " , nsig = " << nsig.getVal() << " , nsigErr = " << nsig.getError() << " , pull = "   << pull << " , nEvents = " << nEventsSmear << std::endl;
+      std::cout << "TOY = " << ii << " , nsig = " << nsig.getVal() << " , nsigErr = " << nsig.getError() << " , pull = "   << pull << " , nEvents = " << nEventsSmear << std::endl;*/
 
       /*RooPlot* xframe = x.frame(Title("Mgg"));
       data->plotOn(xframe); 
