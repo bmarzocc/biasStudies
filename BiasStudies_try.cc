@@ -104,10 +104,14 @@ int main(int argc, const char* argv[])
 
   TFile* f = new TFile((std::string("output_")+std::string(argv[1])+".root").c_str(),"RECREATE");
   
-  TH1F* h_pulls = new TH1F("h_pulls","h_pulls",1000,-1,1);
+  TH1F* h_pulls = new TH1F("h_pulls","h_pulls",6000,-3,3);
+
+  TString card_name("models_2D.rs");
+  HLFactory hlf("HLFactory", card_name, false);
+  RooWorkspace* w = hlf.GetWs();
   
   // --- Observable --- 
-  RooRealVar mes("mes","m_{ES} (GeV)",100.,180.) ; 
+  RooRealVar mes("mgg","mgg (GeV)",100.,180.) ; 
   // --- Build Gaussian signal PDF --- 
   RooRealVar sigmean("sigmean","mgg mass",125.,123.,127.) ; 
   RooRealVar sigwidth("sigwidth","mgg width",1.7,0.7,2.7) ; 
@@ -115,19 +119,22 @@ int main(int argc, const char* argv[])
   // --- Build Expnential background PDF --- 
   RooRealVar a("a","-a",-0.1,-100000.0,0.) ; 
   RooExponential expo("exp","",mes,a);
-  RooRealVar par1("par1","par1",0.1,0.,10000.) ; 
-  RooRealVar par2("par2","par2",0.1,0.,10000.) ; 
-  RooRealVar par3("par3","par3",0.1,0.,10000.) ; 
-  RooRealVar par4("par4","par4",0.1,0.,10000.) ; 
-  RooRealVar par5("par5","par5",0.1,0.,10000.) ; 
-  RooBernstein bern1("BerN1Mgg", "",mes, RooArgList(par1,par2));
-  RooBernstein bern4("BerN4Mgg", "",mes, RooArgList(par1,par2,par3,par4,par5));
+
+  // -- Build Berstein background PDF ---
+  RooFormulaVar *p1mod = new RooFormulaVar(TString::Format("mggp1mod_cat%d",0),"","@0*@0",*w->var(TString::Format("mgg_bkg_8TeV_slope1_cat%d",0)));
+  RooFormulaVar *p2mod = new RooFormulaVar(TString::Format("mggp2mod_cat%d",0),"","@0*@0",*w->var(TString::Format("mgg_bkg_8TeV_slope2_cat%d",0)));
+  RooFormulaVar *p3mod = new RooFormulaVar(TString::Format("mggp3mod_cat%d",0),"","@0*@0",*w->var(TString::Format("mgg_bkg_8TeV_slope3_cat%d",0)));
+  RooFormulaVar *p4mod = new RooFormulaVar(TString::Format("mggp4mod_cat%d",0),"","@0*@0",*w->var(TString::Format("mgg_bkg_8TeV_slope4_cat%d",0)));
+  RooFormulaVar *p5mod = new RooFormulaVar(TString::Format("mggp5mod_cat%d",0),"","@0*@0",*w->var(TString::Format("mgg_bkg_8TeV_slope5_cat%d",0)));
+  RooBernstein bern1("BerN1Mgg", "",mes, RooArgList(*p1mod,*p2mod));
+  RooBernstein bern4("BerN4Mgg", "",mes, RooArgList(*p1mod,*p2mod,*p3mod,*p4mod,*p5mod));
+
   // --- Construct signal+background PDF --- 
-  RooRealVar nsig("nsig","#signal events",0.,-1.*nEvents,1.*nEvents) ; 
+  RooRealVar nsig("nsig","#signal events",0.,-1000.,1000.) ; 
   RooRealVar nbkg("nbkg","#background events",nEvents,0.5*nEvents,1.5*nEvents) ; 
   //RooAddPdf sum("sum","g+a",RooArgList(gauss,expo),RooArgList(nsig,nbkg)) ; 
-  RooAddPdf sum("sum","g+a",RooArgList(bern1,expo),RooArgList(nsig,nbkg)) ; 
-  //RooAddPdf sum("sum","g+a",RooArgList(bern4,expo),RooArgList(nsig,nbkg)) ; 
+  //RooAddPdf sum("sum","g+a",RooArgList(gauss,bern1),RooArgList(nsig,nbkg)) ; 
+  RooAddPdf sum("sum","g+a",RooArgList(gauss,bern4),RooArgList(nsig,nbkg)) ; 
   
   // --- Constraints ---
   float tmp_sigma_bkg = sqrt(nEvents);
@@ -144,13 +151,9 @@ int main(int argc, const char* argv[])
   RooExponential BkgTruthTmp("exp","",mes,b);
   RooRealVar nbkgTruth("nbkgTruth","",nEvents);
   RooExtendPdf BkgTruth("BkgTruth","",BkgTruthTmp,nbkgTruth);
-  /*RooRealVar nsig_truth("nsig_truth","#signal events",0.1*6./80.*nEvents,-1.*nEvents,1.*nEvents) ; 
-  RooRealVar nbkg_truth("nbkg_truth","#background events",nEvents,0.5*nEvents,1.5*nEvents) ; 
-  RooAddPdf BkgTruth("BkgTruth","",RooArgList(gauss,BkgTruthTmp),RooArgList(nsig_truth,nbkg_truth)) ; */
 
   RooMCStudy * mcs = new RooMCStudy(BkgTruth, RooArgSet(mes), FitModel(sum),Silence(), Extended(kTRUE), Binned(kFALSE),
-    				      FitOptions(Range(100.,180.), Save(kFALSE), SumW2Error(kTRUE),
-    						 ExternalConstraints(RooArgSet(nsig_constraint,nbkg_constraint )) ));
+    				      FitOptions(Range(100.,180.), Save(kFALSE), SumW2Error(kTRUE)));
 
   RooChi2MCSModule chi2mod;
   mcs->addModule(chi2mod);
@@ -161,6 +164,7 @@ int main(int argc, const char* argv[])
   pulls.clear();
   
   for(int ii = 0; ii < Npse; ii++){
+      if(ii > 995) continue;
       float pull;
       const RooAbsData* genDataset = mcs->genData(ii);
       float fitN = mcs->fitParams(ii)->getRealValue("nsig");
@@ -170,27 +174,10 @@ int main(int argc, const char* argv[])
       pulls.push_back(pull);
 
       std::cout << "TOY = " << ii << " , nsig = " << fitN << " , nsigErr = " << fitNerr << " , pull = "   << pull << " , nEvents = " << genDataset->sumEntries() << std::endl;
-      /*TRandom Poisson(0);
-      int nEventsSmear = Poisson.Poisson(nEvents);
-      float pull;
-      // --- Generate a toyMC sample from composite PDF --- 
-      RooDataSet *data = BkgTruth.generate(mes,nEventsSmear,Silence(), Extended(kTRUE), Binned(kFALSE)) ; 
-      // --- Perform extended ML fit of composite PDF to toy data --- 
-      sum.fitTo(*data,Verbose(kFALSE),Range(100.,180.), Silence(),Save(kFALSE), SumW2Error(kTRUE),ExternalConstraints(RooArgSet(nsig_constraint,nbkg_constraint ))) ; 
-      pull = nsig.getVal()/nsig.getError();
-      h_pulls->Fill(pull);
-      pulls.push_back(pull);
-
-      std::cout << "TOY = " << ii << " , nsig = " << nsig.getVal() << " , nsigErr = " << nsig.getError() << " , pull = "   << pull << " , nEvents = " << nEventsSmear << std::endl;*/
 
       /*RooPlot* xframe = x.frame(Title("Mgg"));
       data->plotOn(xframe); 
-      fitFunk.plotOn(xframe);*/
-
-      /*RooPlot* xframe = mes.frame() ; 
-      data->plotOn(xframe) ; 
-      sum.plotOn(xframe) ; 
-      //sum.plotOn(xframe,Components(expo),LineStyle(kDashed)) ; 
+      fitFunk.plotOn(xframe);
       
       char name[100]; // enough to hold all numbers up to 64-bits
       sprintf(name, "plot_%d_%d",ii,nEvents);
@@ -202,6 +189,12 @@ int main(int argc, const char* argv[])
   }
   
   float median =-9999.;
+  float mean = 0.; 
+  float Mean = -9999.; 
+
+   for(unsigned int i=0; i<pulls.size(); ++i)
+      if(fabs(pulls.at(i)))mean = mean + pulls.at(i);
+  if(pulls.size()!= 0) Mean = mean/pulls.size();
 
   for(unsigned int i=0; i<pulls.size(); ++i){
       for(unsigned int j=i; j<pulls.size(); ++j){
@@ -217,7 +210,9 @@ int main(int argc, const char* argv[])
     else
       median = pulls[pulls.size()/2];
 
+
   std::cout << "MEDIAN = " << median << std::endl;
+  //std::cout << "MEAN = " << Mean << std::endl;
 
   TCanvas* c = new TCanvas("c","c");
   c->cd();
