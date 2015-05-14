@@ -104,7 +104,7 @@ int main(int argc, const char* argv[])
 
   TFile* f = new TFile((std::string("output_")+std::string(argv[1])+".root").c_str(),"RECREATE");
   
-  TH1F* h_pulls = new TH1F("h_pulls","h_pulls",6000,-3,3);
+  TH1F* h_pulls = new TH1F("h_pulls","h_pulls",50,-1,1);
 
   TString card_name("models_2D.rs");
   HLFactory hlf("HLFactory", card_name, false);
@@ -112,10 +112,20 @@ int main(int argc, const char* argv[])
   
   // --- Observable --- 
   RooRealVar mes("mgg","mgg (GeV)",100.,180.) ; 
+
+  // --- Truth model ---
+  RooRealVar b("b","-b",-0.1,-100000.0,0.) ; 
+  RooExponential BkgTruthTmp("exp","",mes,b);
+  RooRealVar nbkgTruth("nbkgTruth","",nEvents);
+  RooExtendPdf BkgTruth("BkgTruth","",BkgTruthTmp,nbkgTruth);
+
   // --- Build Gaussian signal PDF --- 
   RooRealVar sigmean("sigmean","mgg mass",125.,123.,127.) ; 
   RooRealVar sigwidth("sigwidth","mgg width",1.7,0.7,2.7) ; 
   RooGaussian gauss("gauss","gaussian PDF",mes,sigmean,sigwidth) ; 
+  sigmean.setConstant(kTRUE);
+  sigwidth.setConstant(kTRUE);
+
   // --- Build Expnential background PDF --- 
   RooRealVar a("a","-a",-0.1,-100000.0,0.) ; 
   RooExponential expo("exp","",mes,a);
@@ -132,9 +142,9 @@ int main(int argc, const char* argv[])
   // --- Construct signal+background PDF --- 
   RooRealVar nsig("nsig","#signal events",0.,-1000.,1000.) ; 
   RooRealVar nbkg("nbkg","#background events",nEvents,0.5*nEvents,1.5*nEvents) ; 
-  //RooAddPdf sum("sum","g+a",RooArgList(gauss,expo),RooArgList(nsig,nbkg)) ; 
+  RooAddPdf sum("sum","g+a",RooArgList(gauss,expo),RooArgList(nsig,nbkg)) ; 
   //RooAddPdf sum("sum","g+a",RooArgList(gauss,bern1),RooArgList(nsig,nbkg)) ; 
-  RooAddPdf sum("sum","g+a",RooArgList(gauss,bern4),RooArgList(nsig,nbkg)) ; 
+  //RooAddPdf sum("sum","g+a",RooArgList(gauss,bern4),RooArgList(nsig,nbkg)) ; 
   
   // --- Constraints ---
   float tmp_sigma_bkg = sqrt(nEvents);
@@ -145,12 +155,6 @@ int main(int argc, const char* argv[])
   RooRealVar sigma_bkg("sigma_bkg","",tmp_sigma_bkg);
   RooGaussian nsig_constraint("mu_constaint","mu_constraint",nsig,mean_sig,sigma_sig);
   RooGaussian nbkg_constraint("nbkg_constaint","nbkg_constraint",nbkg,mean_bkg,sigma_bkg);
-  
-  // --- Truth model ---
-  RooRealVar b("b","-b",-0.1,-100000.0,0.) ; 
-  RooExponential BkgTruthTmp("exp","",mes,b);
-  RooRealVar nbkgTruth("nbkgTruth","",nEvents);
-  RooExtendPdf BkgTruth("BkgTruth","",BkgTruthTmp,nbkgTruth);
 
   RooMCStudy * mcs = new RooMCStudy(BkgTruth, RooArgSet(mes), FitModel(sum),Silence(), Extended(kTRUE), Binned(kFALSE),
     				      FitOptions(Range(100.,180.), Save(kFALSE), SumW2Error(kTRUE)));
@@ -189,12 +193,6 @@ int main(int argc, const char* argv[])
   }
   
   float median =-9999.;
-  float mean = 0.; 
-  float Mean = -9999.; 
-
-   for(unsigned int i=0; i<pulls.size(); ++i)
-      if(fabs(pulls.at(i)))mean = mean + pulls.at(i);
-  if(pulls.size()!= 0) Mean = mean/pulls.size();
 
   for(unsigned int i=0; i<pulls.size(); ++i){
       for(unsigned int j=i; j<pulls.size(); ++j){
@@ -212,7 +210,6 @@ int main(int argc, const char* argv[])
 
 
   std::cout << "MEDIAN = " << median << std::endl;
-  //std::cout << "MEAN = " << Mean << std::endl;
 
   TCanvas* c = new TCanvas("c","c");
   c->cd();
