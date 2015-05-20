@@ -71,6 +71,7 @@ TString inDir;
 Int_t resMass;
 bool withCorr;
 
+
 void AddBkgData(RooWorkspace*, int);
 void AddSigData(RooWorkspace*, int);
 void SigModelFit(RooWorkspace*, int);
@@ -985,7 +986,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       h1_low=-2;
       h1_high=2;
     }
-    TH1F *h1 = new TH1F("h1","",150,-3,3);
+    TH1F *h1 = new TH1F("h1","",50,h1_low,h1_high);
     h1->GetXaxis()->SetTitle("pull(N_{bgd}^{SR})");
     for(int i=0; i<pulls.size(); i++) h1->Fill(pulls[i]);
     TCanvas *c0 = new TCanvas("c0","c0",700,500);
@@ -1012,8 +1013,8 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       lat13->DrawLatex(0.0,0.4,TString::Format("Median = %.2f ",results[k])  );
     }
 
-    c0->SaveAs(TString::Format("plots/pulls2D_gen%.5s%.5s_fit%.5s%.5s_cat%d.png",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c));  
-    c0->SaveAs(TString::Format("plots/pulls2D_gen%.5s%.5s_fit%.5s%.5s_cat%d.pdf",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c));  
+    c0->SaveAs(TString::Format("plots/pulls2D_gen%.5s%.5s_fit%.5s%.5s_cat%d_mass%d.png",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c,resMass));  
+    c0->SaveAs(TString::Format("plots/pulls2D_gen%.5s%.5s_fit%.5s%.5s_cat%d_mass%d.pdf",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c,resMass));  
 
     TCanvas *c1 = new TCanvas("c1","c1",1200,1200);
     c1->Divide(3,3);
@@ -1095,8 +1096,8 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       //lat3->DrawLatex(0.62,0.68,TString::Format("#chi^{2}/N = %.2f",mcs->fitParams(i)->getRealValue("chi2")/mcs->fitParams(i)->getRealValue("ndof")));
       //lat3->DrawLatex(0.62,0.62,TString::Format("p(#chi^{2},N) = %.2f",mcs->fitParams(i)->getRealValue("prob")));
     }
-    c1->SaveAs(TString::Format("plots/toymc2D_Mgg_gen%.5s%.5s_fit%.5s%.5s_cat%d.png",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c));
-    c1->SaveAs(TString::Format("plots/toymc2D_Mgg_gen%.5s%.5s_fit%.5s%.5s_cat%d.pdf",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c));
+    c1->SaveAs(TString::Format("plots/toymc2D_Mgg_gen%.5s%.5s_fit%.5s%.5s_cat%d_mass%d.png",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c,resMass));
+    c1->SaveAs(TString::Format("plots/toymc2D_Mgg_gen%.5s%.5s_fit%.5s%.5s_cat%d_mass%d.pdf",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c,resMass));
 
     TCanvas *c2 = new TCanvas("c2","c2",1200,1200);
     c2->Divide(3,3);
@@ -1178,8 +1179,8 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       //lat3->DrawLatex(0.62,0.68,TString::Format("#chi^{2}/N = %.2f",mcs->fitParams(i)->getRealValue("chi2")/mcs->fitParams(i)->getRealValue("ndof")));
       //lat3->DrawLatex(0.62,0.62,TString::Format("p(#chi^{2},N) = %.2f",mcs->fitParams(i)->getRealValue("prob")));
     }
-    c2->SaveAs(TString::Format("plots/toymc2D_Mjj_gen%.5s%.5s_fit%.5s%.5s_cat%d.png",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c));
-    c2->SaveAs(TString::Format("plots/toymc2D_Mjj_gen%.5s%.5s_fit%.5s%.5s_cat%d.pdf",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c));
+    c2->SaveAs(TString::Format("plots/toymc2D_Mjj_gen%.5s%.5s_fit%.5s%.5s_cat%d_mass%d.png",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c,resMass));
+    c2->SaveAs(TString::Format("plots/toymc2D_Mjj_gen%.5s%.5s_fit%.5s%.5s_cat%d_mass%d.pdf",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c,resMass));
 
     delete mcs;
   }
