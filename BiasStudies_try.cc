@@ -104,7 +104,9 @@ int main(int argc, const char* argv[])
 
   TFile* f = new TFile((std::string("output_")+std::string(argv[1])+".root").c_str(),"RECREATE");
   
-  TH1F* h_pulls = new TH1F("h_pulls","h_pulls",50,-1,1);
+  TH1F* h_pulls = new TH1F("h_pulls","h_pulls",6000,-3,3);
+  TH1F* h_Num = new TH1F("h_Num","h_Num",6000,-3,3);
+  TH1F* h_DeNum = new TH1F("h_DeNum","h_DeNum",200000,-100,100);
 
   TString card_name("models_2D.rs");
   HLFactory hlf("HLFactory", card_name, false);
@@ -145,18 +147,17 @@ int main(int argc, const char* argv[])
   RooAddPdf sum("sum","g+a",RooArgList(gauss,expo),RooArgList(nsig,nbkg)) ; 
   //RooAddPdf sum("sum","g+a",RooArgList(gauss,bern1),RooArgList(nsig,nbkg)) ; 
   //RooAddPdf sum("sum","g+a",RooArgList(gauss,bern4),RooArgList(nsig,nbkg)) ; 
+
   
   // --- Constraints ---
   float tmp_sigma_bkg = sqrt(nEvents);
-  float tmp_sigma_sig = 0.1*6./80.*nEvents;//sqrt(sigFrac*data->sumEntries());
-  RooRealVar mean_sig("mean_sig","",0.0);
-  RooRealVar sigma_sig("sigma_sig","",tmp_sigma_sig);
-  RooRealVar mean_bkg("mean_bkg","",nEvents);
-  RooRealVar sigma_bkg("sigma_bkg","",tmp_sigma_bkg);
-  RooGaussian nsig_constraint("mu_constaint","mu_constraint",nsig,mean_sig,sigma_sig);
-  RooGaussian nbkg_constraint("nbkg_constaint","nbkg_constraint",nbkg,mean_bkg,sigma_bkg);
+  RooGaussian nbkgConstraint("nbkgConstraint","nbkgConstraint",nbkg,RooConst(nEvents),RooConst(tmp_sigma_bkg)) ;
+  //float tmp_sigma_sig = 0.1*6./80.*nEvents;//sqrt(sigFrac*data->sumEntries());
+  float tmp_sigma_sig = 1.;//sqrt(sigFrac*data->sumEntries());
+  RooGaussian nsigConstraint("nsigConstraint","nsigConstraint",nsig,RooConst(0.),RooConst(tmp_sigma_sig)) ;
+  RooProdPdf sumConstrained("sumConstrained","sumConstrained",RooArgSet(sum,nbkgConstraint,nsigConstraint)) ;
 
-  RooMCStudy * mcs = new RooMCStudy(BkgTruth, RooArgSet(mes), FitModel(sum),Silence(), Extended(kTRUE), Binned(kFALSE),
+  RooMCStudy * mcs = new RooMCStudy(BkgTruth, RooArgSet(mes), FitModel(sumConstrained),Silence(), Extended(kTRUE), Binned(kFALSE),
     				      FitOptions(Range(100.,180.), Save(kFALSE), SumW2Error(kTRUE)));
 
   RooChi2MCSModule chi2mod;
@@ -171,13 +172,18 @@ int main(int argc, const char* argv[])
       if(ii > 995) continue;
       float pull;
       const RooAbsData* genDataset = mcs->genData(ii);
+      const RooFitResult* fitResults = mcs->fitResult(ii);
+      int fitStatus = fitResults->status();
       float fitN = mcs->fitParams(ii)->getRealValue("nsig");
       float fitNerr = mcs->fitParams(ii)->getRealValue("nsigerr");
+      if(fitNerr == 0) continue;
       pull = (0-fitN)/(fitNerr);
       h_pulls->Fill(pull);
       pulls.push_back(pull);
+      h_Num->Fill(fitN);
+      h_DeNum->Fill(fitNerr);
 
-      std::cout << "TOY = " << ii << " , nsig = " << fitN << " , nsigErr = " << fitNerr << " , pull = "   << pull << " , nEvents = " << genDataset->sumEntries() << std::endl;
+      std::cout << "TOY = " << ii << " , nsig = " << fitN << " , nsigErr = " << fitNerr << " , pull = "   << pull << " , nEvents = " << genDataset->sumEntries() << " , fitStatus = " << fitStatus << std::endl;
 
       /*RooPlot* xframe = x.frame(Title("Mgg"));
       data->plotOn(xframe); 
@@ -218,5 +224,7 @@ int main(int argc, const char* argv[])
   c -> Print("pulls_1.pdf","pdf");
   f->cd();
   h_pulls->Write();
+  h_Num->Write();
+  h_DeNum->Write();
   f->Close();
 }
