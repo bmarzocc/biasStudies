@@ -449,8 +449,8 @@ RooAbsPdf *BkgMggModelFit(RooWorkspace* w, int c, int modelNum) {
     TLatex *lat2 = new TLatex(minMassFit+3.0,0.7*plotMggBkg[c]->GetMaximum(),catdesc.at(c));
     lat2->Draw();
  
-    ctmp->SaveAs(TString::Format("plots/dataBkgMgg_%.5s_cat%d.png",MggBkgTmp[i]->GetName(),c));
-    ctmp->SaveAs(TString::Format("plots/dataBkgMgg_%.5s_cat%d.pdf",MggBkgTmp[i]->GetName(),c));
+    ctmp->SaveAs(TString::Format("plots/dataBkgMgg_%.5s_cat%d_mass%d.png",MggBkgTmp[i]->GetName(),c,resMass));
+    ctmp->SaveAs(TString::Format("plots/dataBkgMgg_%.5s_cat%d_mass%d.pdf",MggBkgTmp[i]->GetName(),c,resMass));
 
     if(i>0){
       float chi2 = 2*(minNLL[i-1]-minNLL[i]);
@@ -709,8 +709,8 @@ RooAbsPdf *BkgMjjModelFit(RooWorkspace* w, int c, int modelNum) {
     TLatex *lat2 = new TLatex(minMassFit+3.0,0.7*plotMjjBkg[c]->GetMaximum(),catdesc.at(c));
     lat2->Draw();
  
-    ctmp->SaveAs(TString::Format("plots/dataBkgMjj_%.5s_cat%d.png",MjjBkgTmp[i]->GetName(),c));
-    ctmp->SaveAs(TString::Format("plots/dataBkgMjj_%.5s_cat%d.pdf",MjjBkgTmp[i]->GetName(),c));
+    ctmp->SaveAs(TString::Format("plots/dataBkgMjj_%.5s_cat%d_mass%d.png",MjjBkgTmp[i]->GetName(),c,resMass));
+    ctmp->SaveAs(TString::Format("plots/dataBkgMjj_%.5s_cat%d_mass%d.pdf",MjjBkgTmp[i]->GetName(),c,resMass));
 
     if(i>0){
       float chi2 = 2*(minNLL[i-1]-minNLL[i]);
@@ -957,7 +957,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       
       //if(fabs(fitN)<0.85*n_gen_sr*genDataset->sumEntries() ){//the minimum for nsig is -1*sigFrac*data->sumData() so make sure the fit isn't pressed against the boundary. that hints at failure
 	pulls.push_back(pull);
-        std::cout << "TOY = " << i << " , nsig = " << fitN << " , nsigErr = " << nsigErr << " , rho = " << rho << " nbkgErr = " << nbkgErr << " , pull = "   << pull << " , nEvents = " << genDataset->sumEntries() << " , constraint = " << tmp_sigma_sig << std::endl;
+        //std::cout << "TOY = " << i << " , nsig = " << fitN << " , nsigErr = " << nsigErr << " , rho = " << rho << " nbkgErr = " << nbkgErr << " , pull = "   << pull << " , nEvents = " << genDataset->sumEntries() << " , constraint = " << tmp_sigma_sig << std::endl;
       //}
 
     }
