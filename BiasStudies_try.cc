@@ -104,8 +104,8 @@ int main(int argc, const char* argv[])
 
   TFile* f = new TFile((std::string("output_")+std::string(argv[1])+".root").c_str(),"RECREATE");
   
-  TH1F* h_pulls = new TH1F("h_pulls","h_pulls",6000,-3,3);
-  TH1F* h_Num = new TH1F("h_Num","h_Num",6000,-3,3);
+  TH1F* h_pulls = new TH1F("h_pulls","h_pulls",150,-3,3);
+  TH1F* h_Num = new TH1F("h_Num","h_Num",150,-3,3);
   TH1F* h_DeNum = new TH1F("h_DeNum","h_DeNum",200000,-100,100);
 
   TString card_name("models_2D.rs");
@@ -152,13 +152,14 @@ int main(int argc, const char* argv[])
   // --- Constraints ---
   float tmp_sigma_bkg = sqrt(nEvents);
   RooGaussian nbkgConstraint("nbkgConstraint","nbkgConstraint",nbkg,RooConst(nEvents),RooConst(tmp_sigma_bkg)) ;
-  //float tmp_sigma_sig = 0.1*6./80.*nEvents;//sqrt(sigFrac*data->sumEntries());
-  float tmp_sigma_sig = 1.;//sqrt(sigFrac*data->sumEntries());
+  float tmp_sigma_sig = 100;//sqrt(sigFrac*data->sumEntries());
+  //float tmp_sigma_sig = 1.;//sqrt(sigFrac*data->sumEntries());
   RooGaussian nsigConstraint("nsigConstraint","nsigConstraint",nsig,RooConst(0.),RooConst(tmp_sigma_sig)) ;
-  RooProdPdf sumConstrained("sumConstrained","sumConstrained",RooArgSet(sum,nbkgConstraint,nsigConstraint)) ;
+  //RooProdPdf sumConstrained("sumConstrained","sumConstrained",RooArgSet(sum,nbkgConstraint,nsigConstraint)) ;
 
-  RooMCStudy * mcs = new RooMCStudy(BkgTruth, RooArgSet(mes), FitModel(sumConstrained),Silence(), Extended(kTRUE), Binned(kFALSE),
-    				      FitOptions(Range(100.,180.), Save(kFALSE), SumW2Error(kTRUE)));
+  RooMCStudy * mcs = new RooMCStudy(BkgTruth, RooArgSet(mes), FitModel(sum),Silence(), Extended(kTRUE), Binned(kFALSE),
+    				      FitOptions(Range(100.,180.), Save(), SumW2Error(kTRUE),Strategy(1),
+    						 ExternalConstraints(RooArgSet(nsigConstraint,nbkgConstraint )) ));
 
   RooChi2MCSModule chi2mod;
   mcs->addModule(chi2mod);
