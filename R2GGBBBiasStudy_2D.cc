@@ -77,7 +77,7 @@ void AddSigData(RooWorkspace*, int);
 void SigModelFit(RooWorkspace*, int);
 RooAbsPdf* BkgMggModelFit(RooWorkspace*, int, int);
 RooAbsPdf* BkgMjjModelFit(RooWorkspace*, int, int);
-void BkgModelBias(RooWorkspace*,int,RooAbsPdf*,RooAbsPdf*,FILE*,FILE*);
+void BkgModelBias(RooWorkspace*,int,RooAbsPdf*,RooAbsPdf*,FILE*,FILE*, FILE*);
 void SetParamNames(RooWorkspace*);
 void SetConstantParams(const RooArgSet* params);
 Double_t effSigma(TH1 *hist);
@@ -86,7 +86,7 @@ void style();
 RooArgSet* defineVariables()
 {
   // define variables of the input ntuple
-  RooRealVar* mJJ  = new RooRealVar("mjj","M(jj)",60,180,"GeV");
+  RooRealVar* mJJ  = new RooRealVar("mjj","M(jj)",75,180,"GeV");
   RooRealVar* mGG  = new RooRealVar("mgg","M(#gamma#gamma)",100,180,"GeV");
   RooRealVar* mRad = new RooRealVar("mtot","M(#gamma#gamma jj)",0,1500,"GeV");
   RooRealVar* wei  = new RooRealVar("evWeight","event weight",0,100,"");
@@ -113,7 +113,7 @@ void runfits(int cat=0, int modelNumMgg=0, int modelNumMjj=0, int inDirNum=0)
   style();
 
   //TString card_name("hgghbb_models_Pol_8TeV.rs");
-  TString card_name("models_2D.rs");
+  TString card_name("/afs/cern.ch/work/b/bmarzocc/BiasStudies/CMSSW_7_4_0/src/biasStudies/models_2D.rs");
   HLFactory hlf("HLFactory", card_name, false);
   RooWorkspace* w = hlf.GetWs();
   AddBkgData(w,cat);
@@ -121,6 +121,7 @@ void runfits(int cat=0, int modelNumMgg=0, int modelNumMjj=0, int inDirNum=0)
   SigModelFit(w, cat);
 
   FILE *fout = fopen("resultsBias2D.txt","a");
+  FILE *foutTotal = fopen("resultsBias2D_total.txt","a");
   FILE *foutCorr = fopen("resultsCorr2D.txt","a");
   //if(modelNumMgg==0 && modelNumMjj ==0) fprintf(fout,"%s\n\n",inDir.Data());
 
@@ -130,11 +131,12 @@ void runfits(int cat=0, int modelNumMgg=0, int modelNumMjj=0, int inDirNum=0)
 
   MggBkgTruth = BkgMggModelFit(w,cat,modelNumMgg); //Ber, Exp, Lan, Lau, Pow
   MjjBkgTruth = BkgMjjModelFit(w,cat,modelNumMjj); //Ber, Exp, Lan, Lau, Pow
-  BkgModelBias(w,cat,MggBkgTruth,MjjBkgTruth,fout,foutCorr);
+  BkgModelBias(w,cat,MggBkgTruth,MjjBkgTruth,fout,foutTotal,foutCorr);
 
 
   //if(modelNumMgg==4 && modelNumMjj==4) fprintf(fout,"\n\n");
   fclose(fout);
+  fclose(foutTotal);
   fclose(foutCorr);
   return;
 }
@@ -164,7 +166,9 @@ void AddBkgData(RooWorkspace* w, int cat) {
 // retrieve the data tree;
 // no common preselection cut applied yet; 
 
-  TFile dataFile(TString::Format("%sDataCS_m%d.root",inDir.Data(),resMass));   
+  TFile dataFile(TString::Format("%sDataCS_m%d.root",inDir.Data(),resMass));
+  //TFile dataFile(TString::Format("%sData_m%d.root",inDir.Data(),resMass));   
+  //TFile dataFile(TString::Format("%ssum_bkg_m%d.root",inDir.Data(),resMass));   
   //TFile dataFile(TString::Format("mcSum_m%d.root",resMass));   
   TTree* dataTree     = (TTree*) dataFile.Get("TCVARS");
 
@@ -242,7 +246,7 @@ void SigModelFit(RooWorkspace* w, int cat) {
   RooProdPdf* SigPdf[ncat];
   // fit range
   Float_t minSigFitMgg(115),maxSigFitMgg(135);
-  Float_t minSigFitMjj(60),maxSigFitMjj(180);
+  Float_t minSigFitMjj(75),maxSigFitMjj(180);
   RooRealVar* mgg = w->var("mgg");
   RooRealVar* mjj = w->var("mjj");
   mgg->setRange("SigFitRange",minSigFitMgg,maxSigFitMgg);
@@ -315,7 +319,7 @@ RooAbsPdf *BkgMggModelFit(RooWorkspace* w, int c, int modelNum) {
   text->SetTextSize(0.04);
 
   data[c]   = (RooDataSet*) w->data(TString::Format("Data_cat%d",c));
-
+  
   RooFormulaVar *p1modMgg = new RooFormulaVar(TString::Format("mggp1modMgg_cat%d",c),"","@0*@0",*w->var(TString::Format("mgg_bkg_8TeV_slope1_cat%d",c)));
   RooFormulaVar *p2modMgg = new RooFormulaVar(TString::Format("mggp2modMgg_cat%d",c),"","@0*@0",*w->var(TString::Format("mgg_bkg_8TeV_slope2_cat%d",c)));
   RooFormulaVar *p3modMgg = new RooFormulaVar(TString::Format("mggp3modMgg_cat%d",c),"","@0*@0",*w->var(TString::Format("mgg_bkg_8TeV_slope3_cat%d",c)));
@@ -363,7 +367,7 @@ RooAbsPdf *BkgMggModelFit(RooWorkspace* w, int c, int modelNum) {
     break;
 
   case 1: //Exponential
-    w->factory(TString::Format("mgg_bkg_8TeV_norm_cat%d[800.0,0.0,100000]",c));
+    w->factory(TString::Format("mgg_bkg_8TeV_norm_cat%d[50.0,0.0,100000]",c));
     MggBkgTmp[0] = new RooExtendPdf("ExpN1Mgg","",*expo1Mgg,*w->var(TString::Format("mgg_bkg_8TeV_norm_cat%d",c)));
     MggBkgTmp[1] = new RooAddPdf("ExpN2Mgg", "", RooArgList(*expo1Mgg,*expo2Mgg), RooArgList(*p1modMgg,*p2modMgg));
     MggBkgTmp[2] = new RooAddPdf("ExpN3Mgg", "", RooArgList(*expo1Mgg,*expo2Mgg,*expo3Mgg), RooArgList(*p1modMgg,*p2modMgg,*p3modMgg));
@@ -451,6 +455,7 @@ RooAbsPdf *BkgMggModelFit(RooWorkspace* w, int c, int modelNum) {
  
     ctmp->SaveAs(TString::Format("plots/dataBkgMgg_%.5s_cat%d_mass%d.png",MggBkgTmp[i]->GetName(),c,resMass));
     ctmp->SaveAs(TString::Format("plots/dataBkgMgg_%.5s_cat%d_mass%d.pdf",MggBkgTmp[i]->GetName(),c,resMass));
+    delete ctmp;
 
     if(i>0){
       float chi2 = 2*(minNLL[i-1]-minNLL[i]);
@@ -711,6 +716,7 @@ RooAbsPdf *BkgMjjModelFit(RooWorkspace* w, int c, int modelNum) {
  
     ctmp->SaveAs(TString::Format("plots/dataBkgMjj_%.5s_cat%d_mass%d.png",MjjBkgTmp[i]->GetName(),c,resMass));
     ctmp->SaveAs(TString::Format("plots/dataBkgMjj_%.5s_cat%d_mass%d.pdf",MjjBkgTmp[i]->GetName(),c,resMass));
+    delete ctmp;
 
     if(i>0){
       float chi2 = 2*(minNLL[i-1]-minNLL[i]);
@@ -741,12 +747,13 @@ RooAbsPdf *BkgMjjModelFit(RooWorkspace* w, int c, int modelNum) {
 
   MjjBkgTmp[bestN]->fitTo(*data[c], Strategy(1),Minos(kFALSE), Range(minMassFit,maxMassFit),SumW2Error(kTRUE), Save(kTRUE));//strategy 1 or 2?
   w->import(*MjjBkgTmp[bestN]);
+
   return MjjBkgTmp[bestN];
 
 }
 
 
-void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBkgTruth, FILE *fout, FILE *foutCorr){
+void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBkgTruth, FILE *fout, FILE *foutTotal, FILE *foutCorr){
 
   std::vector<TString> catdesc;
 
@@ -784,8 +791,8 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
   RooFormulaVar *p5 = new RooFormulaVar("p5","","@0*@0",*w->var(TString::Format("mjj_bkg_8TeV_slope3_cat%d",c)));
   RooFormulaVar *p6 = new RooFormulaVar("p6","","@0*@0",*w->var(TString::Format("mjj_bkg_8TeV_slope4_cat%d",c)));
   RooFormulaVar *p7 = new RooFormulaVar("p7","","@0*@0",*w->var(TString::Format("mjj_bkg_8TeV_slope5_cat%d",c)));
-  RooRealVar *p8 = new RooRealVar("p8","",-0.1,-100000.0,0.0);
-  RooRealVar *p9 = new RooRealVar("p9","",-0.1,-100000.0,0.0);
+  RooRealVar *p8 = new RooRealVar("p8","",-0.1,-10.0,0.0);
+  RooRealVar *p9 = new RooRealVar("p9","",-0.1,-10.0,0.0);
 
   const int totalNDOF=7;
   RooAbsPdf* MggBkgTmp[totalNDOF] = {0};
@@ -805,57 +812,25 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
   MjjBkgTmp[5] = new RooBernstein(TString::Format("BerN%dMjjCand",4), "", *mJJ,RooArgList(*p4,*p5,*p6,*p7,*p3));
   MjjBkgTmp[6] = new RooBernstein(TString::Format("BerN%dMjjCand",1), "", *mJJ,RooArgList(*p4,*p5));
 
+  float n_gen_sr=0;
 
-  //if(MggBkgTruth->GetName()[0]=='B' && MjjBkgTruth->GetName()[0]=='B'){
-  //  fprintf(fout,"Mgg x Mjj spectrum, bias results for cat%d, withCorr=%d\n",c,withCorr);
-  //  fprintf(fout,"Model\t\t\tExp1,Exp1\tPow1,Pow1\tBer1,Ber1\tBer1,Ber2\tBer1,Ber3\n");
-  //}
-
-  //RooGenericPdf *corrBkgTruth = new RooGenericPdf("correlationTruth","1+@0*@1*@2",RooArgList(*corrVal,*mGG,*mJJ));
-  RooProdPdf *BkgTruthTmp = new RooProdPdf("BkgTruthTmp","",RooArgList(*MggBkgTruth,*MjjBkgTruth));
-  RooRealVar *nbkgTruth = new RooRealVar("nbkgTruth","",data->sumEntries());
-  RooExtendPdf *BkgTruth = new RooExtendPdf("BkgTruth","",*BkgTruthTmp,*nbkgTruth);
-
-  float n_gen_sr=BkgTruth->createIntegral(RooArgSet(*mGG,*mJJ),NormSet(RooArgSet(*mGG,*mJJ)),Range("sigRegion"))->getVal()*nbkgTruth->getVal();
-
-  const int Npse = 1000;
+  const int Npse = 500;
   float results[totalNDOF];
+  float resultsTotal[totalNDOF][Npse];
+  float resultsBkg[totalNDOF];
   TH1F *corrHist = new TH1F("corrHist","corrHist",200,-1,1);
   for(int k=0; k<totalNDOF; ++k){
       //for(int k=0; k<1; ++k){
 
-    float sigFrac = 6./80.*80./120.; //estimate fracion of fit region is signal region
-
-    RooProdPdf *BkgFitTmp = new RooProdPdf("BkgFitTmp","",RooArgList(*MggBkgTmp[k],*MjjBkgTmp[k]));
-    RooRealVar *nbkg = new RooRealVar("nbkg","",data->sumEntries(),0.5*data->sumEntries(),1.5*data->sumEntries());
-    RooRealVar *nsig = new RooRealVar("nsig","",0,-1.0*data->sumEntries(),1.0*data->sumEntries());
-    RooAddPdf *BkgFit = new RooAddPdf(TString::Format("BkgFit_cat%d",c), "", RooArgList(*BkgFitTmp,*w->pdf(TString::Format("SigPdf_cat%d",c))), RooArgList(*nbkg,*nsig));
     mGG->setRange("massFit",100,180);
-    mJJ->setRange("massFit",75,180);   
-
-    /*float n_gen_sr=BkgTruth->createIntegral(RooArgSet(*mGG,*mJJ),NormSet(RooArgSet(*mGG,*mJJ)),Range("sigRegion"))->getVal()*nbkgTruth->getVal();
-    float tmp_sigma_bkg = sqrt(data->sumEntries());
-    //float tmp_sigma_sig = sqrt(n_gen_sr);//sqrt(sigFrac*data->sumEntries());
-    float tmp_sigma_sig = 0.1*sigFrac*data->sumEntries();//sqrt(sigFrac*data->sumEntries());
-    RooGaussian *nsig_constraint = new RooGaussian("mu_constaint","mu_constraint",*nsig,RooConst(0.0),RooConst(tmp_sigma_sig));
-    RooGaussian *nbkg_constraint = new RooGaussian("nbkg_constaint","nbkg_constraint",*nbkg,RooConst(data->sumEntries()),RooConst(tmp_sigma_bkg));
-    RooProdPdf *BkgFitConstraint = new RooProdPdf("BkgFitConstraint","",RooArgList(*BkgFit,*nsig_constraint,*nbkg_constraint));
-    mGG->setRange("massFit",100,180);
-    mJJ->setRange("massFit",75,180);
-
-
-    RooMCStudy * mcs = new RooMCStudy(*BkgTruth, RooArgSet(*mGG,*mJJ), FitModel(*BkgFit),Silence(), Extended(kTRUE), Binned(kFALSE),
-    				      FitOptions(Range("massFit"), Save(kTRUE), SumW2Error(kTRUE),Strategy(1)));
-    RooMCStudy * mcs = new RooMCStudy(*BkgTruth, RooArgSet(*mGG,*mJJ), FitModel(*BkgFit),Silence(), Extended(kTRUE), Binned(kFALSE),
-    				      FitOptions(Range("massFit"), Save(), SumW2Error(kTRUE),Strategy(1),
-    						 ExternalConstraints(RooArgSet(*nsig_constraint,*nbkg_constraint )) ));
-    RooMCStudy * mcs = new RooMCStudy(*BkgTruth, RooArgSet(*mGG,*mJJ), FitModel(*BkgFitConstraint),Silence(), Extended(kTRUE), Binned(kFALSE),
-    				      FitOptions(Range("massFit"), Save(), SumW2Error(kTRUE) ));
-
-    RooChi2MCSModule chi2mod;
-    mcs->addModule(chi2mod);
-
-    mcs->generateAndFit(Npse,data->sumEntries(),kTRUE);*/
+    mJJ->setRange("massFit",75,180); 
+    
+    if(resMass == 270){
+       mGG->setRange("massFit",100,180);
+    }
+    if(resMass == 300){
+       mGG->setRange("massFit",100,180);
+    }
 
     TCanvas *c1 = new TCanvas("c1","c1",1200,1200);
     c1->Divide(3,3);
@@ -864,8 +839,30 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
 
     int iCount = 0;
 
-    std::vector<double> pulls;
+    std::vector<double> pulls,pullsBkg,minNLogL, powMgg, powMjj;
+    pulls.clear();
+    pullsBkg.clear();
+    minNLogL.clear();
+    powMgg.clear();
+    powMjj.clear();
     for(int i=0; i<Npse; ++i){
+      
+      resultsTotal[k][i] = -9999;
+
+      TRandom rndm(0);
+      float nEvents = rndm.Poisson(data->sumEntries());
+      if(nEvents == 0) continue;
+
+      RooProdPdf BkgTruthTmp("BkgTruthTmp","",RooArgList(*MggBkgTruth,*MjjBkgTruth));
+      RooRealVar nbkgTruth("nbkgTruth","",nEvents);
+      RooExtendPdf BkgTruth("BkgTruth","",BkgTruthTmp,nbkgTruth);
+
+      RooProdPdf BkgFitTmp("BkgFitTmp","",RooArgList(*MggBkgTmp[k],*MjjBkgTmp[k]));
+      RooRealVar nbkg("nbkg","",nEvents,0.5*nEvents,1.5*nEvents);
+      RooRealVar nsig("nsig","",0.,-1.*nEvents,nEvents);
+      RooAddPdf BkgFit(TString::Format("BkgFit_cat%d",c), "", RooArgList(BkgFitTmp,*w->pdf(TString::Format("SigPdf_cat%d",c))), RooArgList(nbkg,nsig));
+
+      //n_gen_sr=BkgTruth.createIntegral(RooArgSet(*mGG,*mJJ),NormSet(RooArgSet(*mGG,*mJJ)),Range("sigRegion"))->getVal()*nbkgTruth.getVal();
       
       //set parameters to initial values
       if(k == 0 || k == 1){
@@ -890,31 +887,38 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
           }
 
       }
-      nbkg->setVal(data->sumEntries());
-      nsig->setVal(0.);
-      
-      TRandom rndm(0);
-      int nEvent = rndm.Poisson(data->sumEntries());
       //RooRandom::randomGenerator()->SetSeed(nEvent); 
-      RooDataSet *dataGen = BkgTruth->generate(RooArgSet(*mGG,*mJJ),nEvent,Silence(), Extended(kTRUE), Binned(kFALSE));
-      RooFitResult* fitResults = BkgFit->fitTo(*dataGen,Range("massFit"),Save(),SumW2Error(kTRUE)) ; 
-      
+      RooDataSet *dataGen = BkgTruth.generate(RooArgSet(*mGG,*mJJ),nEvents,Range("massFit"),Extended(kTRUE));
+      RooFitResult* fitResults = BkgFit.fitTo(*dataGen,Range("massFit"),Save(),SumW2Error(kTRUE)) ; 
+
+     /*if(k == 1){
+       std::cout << "TOY = " << i << " , PowerMgg = " << p8->getVal()<< "+/-" << p8->getError() << std::endl;
+       std::cout << "TOY = " << i << " , PowerMjj = " << p9->getVal()<< "+/-" << p9->getError() << std::endl;
+     }*/
+       
       //corrHist->Fill(genDataset->correlation(*mGG,*mJJ));
       int fitStatus = fitResults->status();
       float corr = fitResults->correlation("nsig","nbkg");
-      float fitN = nsig->getVal();
-      float fitNerr = nsig->getError();
-      float fitBkg = nbkg->getVal();
-      float fitBkgerr = nbkg->getError();
+      float fitN = nsig.getVal();
+      float fitNerr = nsig.getError();
+      float fitBkg = nbkg.getVal();
+      float fitBkgerr = nbkg.getError();
+      float pull = (0.-fitN)/(fitNerr);
+      float pullBkg = (nEvents-fitBkg)/(fitBkgerr);
+      //std::cout << "TOY = " << i << " , status = " << fitStatus << " , nbkg = " << fitBkg << " , nbkgErr = " << fitBkgerr << " , nsig = " << fitN << " , nsigErr = " << fitNerr << " , corr = " << corr << " , pullSig = "   << pull << " , pullBkg = "   << pullBkg << " , -LogLike = " << fitResults->minNll() << " , nEvents = " << nEvents << " " << data->sumEntries() << std::endl;
       if(fitNerr == 0. || fitBkgerr== 0.) continue;
       if(fabs(fitResults->minNll()) > 10e6) continue;
-      if(fabs(nsig->getVal())> 0.85*data->sumEntries()) continue;
-      if(nbkg->getVal() < 0.5*1.15*data->sumEntries() || nbkg->getVal() > 1.5*0.85*data->sumEntries()) continue;
+      if(fabs(nsig.getVal())> 0.85*nEvents) continue;
+      if(nbkg.getVal() < 0.5*1.15*nEvents || nbkg.getVal() > 1.5*0.85*nEvents) continue;
+      if(fabs(corr)>0.85) continue;
       iCount++;
-      float pull = (0.-fitN)/(fitNerr);
-      float pullBkg = (dataGen->sumEntries()-fitBkg)/(fitBkgerr);
       pulls.push_back(pull);
-      //std::cout << "TOY = " << i << " , status = " << fitStatus << " , nbkg = " << fitBkg << " , nbkgErr = " << fitBkgerr << " , nsig = " << fitN << " , nsigErr = " << fitNerr << " , corr = " << corr << " , pullSig = "   << pull << " , pullBkg = "   << pullBkg << " , -LogLike = " << fitResults->minNll() << " , nEvents = " << dataGen->sumEntries() << std::endl;
+      pullsBkg.push_back(pullBkg);
+      resultsTotal[k][i]=pull;
+      minNLogL.push_back(fitResults->minNll());
+      if(k == 1)powMgg.push_back(p8->getVal());
+      if(k == 1)powMjj.push_back(p9->getVal());
+      //std::cout << "TOY = " << i << " , status = " << fitStatus << " , nbkg = " << fitBkg << " , nbkgErr = " << fitBkgerr << " , nsig = " << fitN << " , nsigErr = " << fitNerr << " , corr = " << corr << " , pullSig = "   << pull << " , pullBkg = "   << pullBkg << " , -LogLike = " << fitResults->minNll() << " , nEvents = " << data->sumEntries() << std::endl;
       if(iCount > 0 && iCount <= 9){
       c1->cd(iCount);
       RooPlot *frame = mGG->frame();
@@ -1072,6 +1076,16 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
 
     }
 
+    float h1_low=0, h1_high=0;
+    if (c==0 || c==2){
+      h1_low=-1;
+      h1_high=1;
+    }
+    else{
+      h1_low=-2;
+      h1_high=2;
+    }
+    
     for(int i=0; i<pulls.size(); ++i){
       for(int j=i; j<pulls.size(); ++j){
 	if(pulls[i]>pulls[j]){
@@ -1087,29 +1101,14 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       results[k] = pulls[pulls.size()/2];
 
     if(pulls.size()==0){ pulls.push_back(-9999);  pulls.push_back(-9998);}
-    float h1_low=0, h1_high=0;
-    if (c==0 || c==2){
-      h1_low=-1;
-      h1_high=1;
-    }
-    else{
-      h1_low=-2;
-      h1_high=2;
-    }
+
     TH1F *h1 = new TH1F("h1","",50,-5,5);
-    h1->GetXaxis()->SetTitle("pull(N_{bgd}^{SR})");
+    h1->GetXaxis()->SetTitle("pull(nSig)");
     for(int i=0; i<pulls.size(); i++) h1->Fill(pulls[i]);
     TCanvas *c0 = new TCanvas("c0","c0",700,500);
     h1->SetMaximum(h1->GetMaximum()*1.50);
     h1->Draw();
-    TFitResultPtr pullFit;
     if(h1->Integral()>4){
-      //pullFit = h1->Fit("gaus","s");
-      TLatex *lat1  = new TLatex(h1_low+0.3,0.85*h1->GetMaximum(),"#splitline{#scale[1.0]{CMS Preliminary}}{#scale[0.8]{#sqrt{s} = 8 TeV}}");
-      //lat1->Draw();
-      //TLatex *lat12 = new TLatex(0.8,0.60*h1->GetMaximum(),TString::Format("#splitline{#scale[1.0]{#mu = %.2f #pm %.2f}}{#scale[1.0]{#sigma = %.2f #pm %.2f}}",pullFit->GetParams()[1],pullFit->GetErrors()[1],pullFit->GetParams()[2],pullFit->GetErrors()[2]));
-      //lat12->SetTextColor(kRed);
-      //lat12->Draw();
       TLatex *lat13 = new TLatex();
       lat13->DrawLatex(h1_low+0.15,0.91*h1->GetMaximum(),TString::Format("Num PSE: %d",pulls.size()) );
       lat13->DrawLatex(h1_low+0.15,0.85*h1->GetMaximum(),TString::Format("Gen function: %.5s,%.5s",MggBkgTruth->GetName(),MjjBkgTruth->GetName()) );
@@ -1123,8 +1122,114 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       lat13->DrawLatex(0.0,0.4,TString::Format("Median = %.2f ",results[k])  );
     }
 
+    for(int i=0; i<pullsBkg.size(); ++i){
+      for(int j=i; j<pullsBkg.size(); ++j){
+	if(pullsBkg[i]>pullsBkg[j]){
+	  float tmp=pullsBkg[i];
+	  pullsBkg[i]=pullsBkg[j];
+	  pullsBkg[j]=tmp;
+	}}}
+    if(pullsBkg.size()==0)
+      resultsBkg[k] = -9999;
+    else if(pullsBkg.size()%2==0)
+      resultsBkg[k] = 0.5*(pullsBkg[pullsBkg.size()/2]+pullsBkg[pullsBkg.size()/2-1]);
+    else
+      resultsBkg[k] = pullsBkg[pullsBkg.size()/2];
+
+    if(pullsBkg.size()==0){ pullsBkg.push_back(-9999);  pullsBkg.push_back(-9998);}
+
+    TH1F *h2 = new TH1F("h2","",50,-5,5);
+    h2->GetXaxis()->SetTitle("pull(nBkg)");
+    for(int i=0; i<pullsBkg.size(); i++) h2->Fill(pullsBkg[i]);
+    TCanvas *c3 = new TCanvas("c3","c3",700,500);
+    h2->SetMaximum(h2->GetMaximum()*1.50);
+    h2->Draw();
+    if(h2->Integral()>4){
+      TLatex *lat13 = new TLatex();
+      lat13->DrawLatex(h1_low+0.15,0.91*h2->GetMaximum(),TString::Format("Num PSE: %d",pullsBkg.size()) );
+      lat13->DrawLatex(h1_low+0.15,0.85*h2->GetMaximum(),TString::Format("Gen function: %.5s,%.5s",MggBkgTruth->GetName(),MjjBkgTruth->GetName()) );
+      lat13->DrawLatex(h1_low+0.15,0.79*h2->GetMaximum(),TString::Format("Fit function: %.5s,%.5s",MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName()) );
+      lat13->DrawLatex(h1_low+0.15,0.73*h2->GetMaximum(),TString::Format("Median = %.2f ",resultsBkg[k]) );
+      lat13->DrawLatex(h1_low+0.15,0.67*h2->GetMaximum(),TString::Format("N_{gen}^{SR} = %.2f ",n_gen_sr) );
+    }
+    else{
+      TLatex *lat13 = new TLatex();
+      lat13->DrawLatex(0.0,0.5,"Not enough entries." );
+      lat13->DrawLatex(0.0,0.4,TString::Format("Median = %.2f ",resultsBkg[k])  );
+    }
+
+    TH1F *h3 = new TH1F("h3","",40,0.,400.);
+    h3->GetXaxis()->SetTitle("-minLogLikelihood");
+    for(int i=0; i<minNLogL.size(); i++) h3->Fill(minNLogL[i]);
+    TCanvas *c4 = new TCanvas("c4","c4",700,500);
+    h3->SetMaximum(h3->GetMaximum()*1.50);
+    h3->Draw();
+    if(h3->Integral()>4){
+      TLatex *lat13 = new TLatex();
+      lat13->DrawLatex(h1_low+0.15,0.91*h3->GetMaximum(),TString::Format("Num PSE: %d",pullsBkg.size()) );
+      lat13->DrawLatex(h1_low+0.15,0.85*h3->GetMaximum(),TString::Format("Gen function: %.5s,%.5s",MggBkgTruth->GetName(),MjjBkgTruth->GetName()) );
+      lat13->DrawLatex(h1_low+0.15,0.79*h3->GetMaximum(),TString::Format("Fit function: %.5s,%.5s",MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName()) );
+      lat13->DrawLatex(h1_low+0.15,0.67*h3->GetMaximum(),TString::Format("N_{gen}^{SR} = %.2f ",n_gen_sr) );
+    }
+    else{
+      TLatex *lat13 = new TLatex();
+      lat13->DrawLatex(0.0,0.5,"Not enough entries." );
+      //lat13->DrawLatex(0.0,0.4,TString::Format("Median = %.2f ",results[k])  );
+    }
+    
+    TH1F *h4 = new TH1F("h4","",100,-10,0.);
+    h4->GetXaxis()->SetTitle("powMgg");
+    for(int i=0; i<powMgg.size(); i++) h4->Fill(powMgg.at(i));
+    TCanvas *c5 = new TCanvas("c5","c5",700,500);
+    h4->SetMaximum(h4->GetMaximum()*1.50);
+    h4->Draw();
+    if(h4->Integral()>4){
+      TLatex *lat13 = new TLatex();
+      lat13->DrawLatex(h1_low+0.15,0.91*h3->GetMaximum(),TString::Format("Num PSE: %d",powMgg.size()) );
+      lat13->DrawLatex(h1_low+0.15,0.85*h3->GetMaximum(),TString::Format("Gen function: %.5s,%.5s",MggBkgTruth->GetName(),MjjBkgTruth->GetName()) );
+      lat13->DrawLatex(h1_low+0.15,0.79*h3->GetMaximum(),TString::Format("Fit function: %.5s,%.5s",MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName()) );
+      lat13->DrawLatex(h1_low+0.15,0.67*h3->GetMaximum(),TString::Format("N_{gen}^{SR} = %.2f ",n_gen_sr) );
+    }
+    else{
+      TLatex *lat13 = new TLatex();
+      lat13->DrawLatex(0.0,0.5,"Not enough entries." );
+      //lat13->DrawLatex(0.0,0.4,TString::Format("Median = %.2f ",results[k])  );
+    }
+
+    TH1F *h5 = new TH1F("h5","",100,-10.,0.);
+    h5->GetXaxis()->SetTitle("powMjj");
+    for(int i=0; i<powMjj.size(); i++) h5->Fill(powMjj.at(i));
+    TCanvas *c6 = new TCanvas("c6","c6",700,500);
+    h5->SetMaximum(h5->GetMaximum()*1.50);
+    h5->Draw();
+    if(h5->Integral()>4){
+      TLatex *lat13 = new TLatex();
+      lat13->DrawLatex(h1_low+0.15,0.91*h3->GetMaximum(),TString::Format("Num PSE: %d",powMjj.size()) );
+      lat13->DrawLatex(h1_low+0.15,0.85*h3->GetMaximum(),TString::Format("Gen function: %.5s,%.5s",MggBkgTruth->GetName(),MjjBkgTruth->GetName()) );
+      lat13->DrawLatex(h1_low+0.15,0.79*h3->GetMaximum(),TString::Format("Fit function: %.5s,%.5s",MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName()) );
+      lat13->DrawLatex(h1_low+0.15,0.67*h3->GetMaximum(),TString::Format("N_{gen}^{SR} = %.2f ",n_gen_sr) );
+    }
+    else{
+      TLatex *lat13 = new TLatex();
+      lat13->DrawLatex(0.0,0.5,"Not enough entries." );
+      //lat13->DrawLatex(0.0,0.4,TString::Format("Median = %.2f ",results[k])  );
+    }
+
     c0->SaveAs(TString::Format("plots/pulls2D_gen%.5s%.5s_fit%.5s%.5s_cat%d_mass%d.png",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c,resMass));  
     c0->SaveAs(TString::Format("plots/pulls2D_gen%.5s%.5s_fit%.5s%.5s_cat%d_mass%d.pdf",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c,resMass));  
+    
+    c3->SaveAs(TString::Format("plots/pulls2D_bkg_gen%.5s%.5s_fit%.5s%.5s_cat%d_mass%d.png",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c,resMass));  
+    c3->SaveAs(TString::Format("plots/pulls2D_bkg_gen%.5s%.5s_fit%.5s%.5s_cat%d_mass%d.pdf",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c,resMass));
+
+    c4->SaveAs(TString::Format("plots/minNLL_gen%.5s%.5s_fit%.5s%.5s_cat%d_mass%d.png",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c,resMass));  
+    c4->SaveAs(TString::Format("plots/minNLL_gen%.5s%.5s_fit%.5s%.5s_cat%d_mass%d.pdf",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c,resMass));  
+
+    if(k==1){
+    c5->SaveAs(TString::Format("plots/powMgg_gen%.5s%.5s_fit%.5s%.5s_cat%d_mass%d.png",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c,resMass));  
+    c5->SaveAs(TString::Format("plots/powMgg_gen%.5s%.5s_fit%.5s%.5s_cat%d_mass%d.pdf",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c,resMass));  
+
+    c6->SaveAs(TString::Format("plots/powMjj_gen%.5s%.5s_fit%.5s%.5s_cat%d_mass%d.png",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c,resMass));  
+    c6->SaveAs(TString::Format("plots/powMjj_gen%.5s%.5s_fit%.5s%.5s_cat%d_mass%d.pdf",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c,resMass));  }
 
     c1->SaveAs(TString::Format("plots/toymc2D_Mgg_gen%.5s%.5s_fit%.5s%.5s_cat%d_mass%d.png",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c,resMass));
     c1->SaveAs(TString::Format("plots/toymc2D_Mgg_gen%.5s%.5s_fit%.5s%.5s_cat%d_mass%d.pdf",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c,resMass));
@@ -1132,10 +1237,25 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
     c2->SaveAs(TString::Format("plots/toymc2D_Mjj_gen%.5s%.5s_fit%.5s%.5s_cat%d_mass%d.png",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c,resMass));
     c2->SaveAs(TString::Format("plots/toymc2D_Mjj_gen%.5s%.5s_fit%.5s%.5s_cat%d_mass%d.pdf",MggBkgTruth->GetName(),MjjBkgTruth->GetName(),MggBkgTmp[k]->GetName(),MjjBkgTmp[k]->GetName(),c,resMass));
 
+    delete c0;
+    delete c1;
+    delete c2;
+    delete c3;
+    delete c4;
+    delete c5;
+    delete c6;
+    delete h1;
+    delete h2;
+    delete h3;
+    delete h4;
+    delete h5;
   }
 
   fprintf(fout,"resMass=%d,cat%d,withCorr=%d\t%.5s,%.5s\t%6.3f\t%6.3f\t%6.3f\t%6.3f\t%6.3f\t%6.3f\t%6.3f\n",resMass,c,withCorr,MggBkgTruth->GetName(),MjjBkgTruth->GetName(),results[0],results[1],results[2],results[3],results[4],results[5],results[6]);
   fprintf(foutCorr,"resMass=%d,cat%d,withCorr=%d\t%.5s,%.5s\t%.4f +/- %.4f\n",resMass,c,withCorr,MggBkgTruth->GetName(),MjjBkgTruth->GetName(),corrHist->GetMean(),effSigma(corrHist));
+  
+  for(int i = 0; i<Npse;i++)
+    fprintf(foutTotal,"resMass=%d,cat%d,withCorr=%d\t%.5s,%.5s\t%6.3f\t%6.3f\t%6.3f\t%6.3f\t%6.3f\t%6.3f\t%6.3f\n",resMass,c,withCorr,MggBkgTruth->GetName(),MjjBkgTruth->GetName(),resultsTotal[0][i],resultsTotal[1][i],resultsTotal[2][i],resultsTotal[3][i],resultsTotal[4][i],resultsTotal[5][i],resultsTotal[6][i]);
 
   return;
 }
