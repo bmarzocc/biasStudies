@@ -86,8 +86,10 @@ void style();
 RooArgSet* defineVariables()
 {
   // define variables of the input ntuple
-  RooRealVar* mJJ  = new RooRealVar("mjj","M(jj)",75,180,"GeV");
-  RooRealVar* mGG  = new RooRealVar("mgg","M(#gamma#gamma)",100,180,"GeV");
+  RooRealVar* mJJ  = new RooRealVar("mjj","M(jj)",60,180,"GeV");
+  RooRealVar* mGG = new RooRealVar("mgg","M(#gamma#gamma)",100,155,"GeV");
+  if(resMass == 270) mGG->setRange(100,155);
+  else if (resMass == 300) mGG->setRange(100,175);
   RooRealVar* mRad = new RooRealVar("mtot","M(#gamma#gamma jj)",0,1500,"GeV");
   RooRealVar* wei  = new RooRealVar("evWeight","event weight",0,100,"");
   RooCategory* bJetTagCategory = new RooCategory("cut_based_ct","event category 4") ;
@@ -246,7 +248,7 @@ void SigModelFit(RooWorkspace* w, int cat) {
   RooProdPdf* SigPdf[ncat];
   // fit range
   Float_t minSigFitMgg(115),maxSigFitMgg(135);
-  Float_t minSigFitMjj(75),maxSigFitMjj(180);
+  Float_t minSigFitMjj(60),maxSigFitMjj(180);
   RooRealVar* mgg = w->var("mgg");
   RooRealVar* mjj = w->var("mjj");
   mgg->setRange("SigFitRange",minSigFitMgg,maxSigFitMgg);
@@ -308,11 +310,15 @@ RooAbsPdf *BkgMggModelFit(RooWorkspace* w, int c, int modelNum) {
   RooPlot* plotMggBkg[9];
 
   Float_t minMassFit(100),maxMassFit(180); 
+  if(resMass == 270) maxMassFit = 155;
+  if(resMass == 300) maxMassFit = 175;
 
   RooRealVar* mGG     = w->var("mgg");
   mGG->setUnit("GeV");
   RooRealVar* mJJ     = w->var("mjj");
   mJJ->setUnit("GeV");
+  
+  mGG->setRange("fitrange",minMassFit,maxMassFit);
   
   TLatex *text = new TLatex();
   text->SetNDC();
@@ -572,10 +578,12 @@ RooAbsPdf *BkgMjjModelFit(RooWorkspace* w, int c, int modelNum) {
   RooFitResult* fitresult[9];;
   RooPlot* plotMjjBkg[9];
 
-  Float_t minMassFit(75),maxMassFit(180); 
+  Float_t minMassFit(60),maxMassFit(180); 
+  if(resMass == 0) minMassFit = 75;
 
   RooRealVar* mJJ     = w->var("mjj");
   mJJ->setUnit("GeV");
+  mJJ->setRange("fitrange",minMassFit,maxMassFit); 
   
   TLatex *text = new TLatex();
   text->SetNDC();
@@ -763,7 +771,10 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
   catdesc.push_back("#scale[0.8]{cat3}");
 
   Float_t minMggMassFit(100),maxMggMassFit(180); 
-  Float_t minMjjMassFit(75),maxMjjMassFit(180); 
+  Float_t minMjjMassFit(60),maxMjjMassFit(180); 
+  if(resMass == 270) maxMggMassFit = 155;
+  if(resMass == 300) maxMggMassFit = 175;
+  if(resMass == 0) minMjjMassFit = 75; 
   float sigMeanMgg=0, sigFWHM_Mgg=0, sigMeanMjj=0, sigFWHM_Mjj=0;
   switch(c){
   case 0: case 2: sigMeanMgg=124.81; sigFWHM_Mgg=1.76; sigMeanMjj=122.20; sigFWHM_Mjj=22.43; break;
@@ -789,28 +800,38 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
   RooFormulaVar *p3 = new RooFormulaVar("p3","","@0*@0",*w->var(TString::Format("mjj_bkg_8TeV_slope1_cat%d",c)));
   RooFormulaVar *p4 = new RooFormulaVar("p4","","@0*@0",*w->var(TString::Format("mjj_bkg_8TeV_slope2_cat%d",c)));
   RooFormulaVar *p5 = new RooFormulaVar("p5","","@0*@0",*w->var(TString::Format("mjj_bkg_8TeV_slope3_cat%d",c)));
-  RooFormulaVar *p6 = new RooFormulaVar("p6","","@0*@0",*w->var(TString::Format("mjj_bkg_8TeV_slope4_cat%d",c)));
-  RooFormulaVar *p7 = new RooFormulaVar("p7","","@0*@0",*w->var(TString::Format("mjj_bkg_8TeV_slope5_cat%d",c)));
-  RooRealVar *p8 = new RooRealVar("p8","",-0.1,-10.0,0.0);
-  RooRealVar *p9 = new RooRealVar("p9","",-0.1,-10.0,0.0);
+  RooRealVar *p6 = new RooRealVar("p6","",-0.1,-10.0,10.);
+  RooRealVar *p7 = new RooRealVar("p7","",-0.1,-10.0,10.);
+  RooRealVar *p8 = new RooRealVar("p8","",-0.1,-10.0,10.);
+  RooRealVar *p9 = new RooRealVar("p9","",-0.1,-10.0,10.);
+
+  RooExponential* expo1FitMgg = new RooExponential("exp1FitMgg","",*mGG,*p6);
+  RooExponential* expo2FitMgg = new RooExponential("exp2FitMgg","",*mGG,*p7);
+  RooExponential* expo1FitMjj = new RooExponential("exp1FitMjj","",*mJJ,*p8);
+  RooExponential* expo2FitMjj = new RooExponential("exp2FitMjj","",*mJJ,*p9);
+  
+  RooGenericPdf* pow1FitMgg = new RooGenericPdf("pow1FitMgg","pow(@0,@1)",RooArgList(*mGG,*p6));
+  RooGenericPdf* pow2FitMgg = new RooGenericPdf("pow2FitMgg","pow(@0,@1)",RooArgList(*mGG,*p7));
+  RooGenericPdf* pow1FitMjj = new RooGenericPdf("pow1FitMjj","pow(@0,@1)",RooArgList(*mJJ,*p8));
+  RooGenericPdf* pow2FitMjj = new RooGenericPdf("pow2FitMjj","pow(@0,@1)",RooArgList(*mJJ,*p9));
 
   const int totalNDOF=7;
   RooAbsPdf* MggBkgTmp[totalNDOF] = {0};
   RooAbsPdf* MjjBkgTmp[totalNDOF] = {0};
-  MggBkgTmp[0] = new RooExponential(TString::Format("ExpN%dMggCand",1), "", *mGG,*p8);
-  MggBkgTmp[1] = new RooGenericPdf("PowN1MggCand","pow(@0,@1)",RooArgList(*mGG,*p8));
-  MggBkgTmp[2] = new RooBernstein(TString::Format("BerN%dMggCand",1), "", *mGG,RooArgList(*p0,*p1));
-  MggBkgTmp[3] = new RooBernstein(TString::Format("BerN%dMggCand",1), "", *mGG,RooArgList(*p0,*p1));
+  MggBkgTmp[0] = new RooExponential(TString::Format("ExpN%dMggCand",1), "", *mGG,*p6);
+  MggBkgTmp[1] = new RooAddPdf(TString::Format("ExpN%dMggCand",2), "", RooArgList(*expo1FitMgg,*expo2FitMgg), RooArgList(*p6,*p7));
+  MggBkgTmp[2] = new RooGenericPdf(TString::Format("PowN%dMggCand",1),"pow(@0,@1)",RooArgList(*mGG,*p6));
+  MggBkgTmp[3] = new RooAddPdf(TString::Format("PowN%dMggCand",2), "", RooArgList(*pow1FitMgg,*pow2FitMgg), RooArgList(*p6,*p8));
   MggBkgTmp[4] = new RooBernstein(TString::Format("BerN%dMggCand",1), "", *mGG,RooArgList(*p0,*p1));
   MggBkgTmp[5] = new RooBernstein(TString::Format("BerN%dMggCand",1), "", *mGG,RooArgList(*p0,*p1));
   MggBkgTmp[6] = new RooBernstein(TString::Format("BerN%dMggCand",2), "", *mGG,RooArgList(*p0,*p1,*p2));
-  MjjBkgTmp[0] = new RooExponential(TString::Format("ExpN%dMjjCand",1), "", *mJJ,*p9);
-  MjjBkgTmp[1] = new RooGenericPdf("PowN1MjjCand","pow(@0,@1)",RooArgList(*mJJ,*p9));
-  MjjBkgTmp[2] = new RooBernstein(TString::Format("BerN%dMjjCand",1), "", *mJJ,RooArgList(*p4,*p5));
-  MjjBkgTmp[3] = new RooBernstein(TString::Format("BerN%dMjjCand",2), "", *mJJ,RooArgList(*p4,*p5,*p6));
-  MjjBkgTmp[4] = new RooBernstein(TString::Format("BerN%dMjjCand",3), "", *mJJ,RooArgList(*p4,*p5,*p6,*p7));
-  MjjBkgTmp[5] = new RooBernstein(TString::Format("BerN%dMjjCand",4), "", *mJJ,RooArgList(*p4,*p5,*p6,*p7,*p3));
-  MjjBkgTmp[6] = new RooBernstein(TString::Format("BerN%dMjjCand",1), "", *mJJ,RooArgList(*p4,*p5));
+  MjjBkgTmp[0] = new RooExponential(TString::Format("ExpN%dMjjCand",1), "", *mJJ,*p8);
+  MjjBkgTmp[1] = new RooAddPdf(TString::Format("ExpN%dMjjCand",2), "", RooArgList(*expo1FitMjj,*expo2FitMjj), RooArgList(*p8,*p9));
+  MjjBkgTmp[2] = new RooGenericPdf(TString::Format("PowN%dMjjCand",1),"pow(@0,@1)",RooArgList(*mJJ,*p8));
+  MjjBkgTmp[3] = new RooAddPdf(TString::Format("PowN%dMjjCand",2), "", RooArgList(*pow1FitMjj,*pow2FitMjj), RooArgList(*p8,*p9));
+  MjjBkgTmp[4] = new RooBernstein(TString::Format("BerN%dMjjCand",1), "", *mJJ,RooArgList(*p3,*p4));
+  MjjBkgTmp[5] = new RooBernstein(TString::Format("BerN%dMjjCand",2), "", *mJJ,RooArgList(*p3,*p4,*p5));
+  MjjBkgTmp[6] = new RooBernstein(TString::Format("BerN%dMjjCand",1), "", *mJJ,RooArgList(*p3,*p4));
 
   float n_gen_sr=0;
 
@@ -823,13 +844,16 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       //for(int k=0; k<1; ++k){
 
     mGG->setRange("massFit",100,180);
-    mJJ->setRange("massFit",75,180); 
+    mJJ->setRange("massFit",60,180); 
     
     if(resMass == 270){
-       mGG->setRange("massFit",100,180);
+       mGG->setRange("massFit",100,155);
     }
     if(resMass == 300){
-       mGG->setRange("massFit",100,180);
+       mGG->setRange("massFit",100,175);
+    }
+    if(resMass == 0){
+       mJJ->setRange("massFit",75,180);
     }
 
     TCanvas *c1 = new TCanvas("c1","c1",1200,1200);
@@ -856,39 +880,45 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       RooProdPdf BkgTruthTmp("BkgTruthTmp","",RooArgList(*MggBkgTruth,*MjjBkgTruth));
       RooRealVar nbkgTruth("nbkgTruth","",nEvents);
       RooExtendPdf BkgTruth("BkgTruth","",BkgTruthTmp,nbkgTruth);
+      //RooRealVar nsigTruth("nsigTruth","",0.);
+      //RooAddPdf BkgTruth("BkgTruth", "", RooArgList(BkgTruthTmp,*w->pdf(TString::Format("SigPdf_cat%d",c))), RooArgList(nbkgTruth,nsigTruth));
 
       RooProdPdf BkgFitTmp("BkgFitTmp","",RooArgList(*MggBkgTmp[k],*MjjBkgTmp[k]));
       RooRealVar nbkg("nbkg","",nEvents,0.5*nEvents,1.5*nEvents);
       RooRealVar nsig("nsig","",0.,-1.*nEvents,nEvents);
+      //RooRealVar nsig("nsig","",nsigTruth.getVal(),-3.*nsigTruth.getVal(),3*nsigTruth.getVal());
       RooAddPdf BkgFit(TString::Format("BkgFit_cat%d",c), "", RooArgList(BkgFitTmp,*w->pdf(TString::Format("SigPdf_cat%d",c))), RooArgList(nbkg,nsig));
 
       //n_gen_sr=BkgTruth.createIntegral(RooArgSet(*mGG,*mJJ),NormSet(RooArgSet(*mGG,*mJJ)),Range("sigRegion"))->getVal()*nbkgTruth.getVal();
       
-      //set parameters to initial values
-      if(k == 0 || k == 1){
-         p8->setVal(-0.1);
-         p9->setVal(-0.1);
-      }else{
-
-         RooArgSet* paramsMgg = (RooArgSet*) MggBkgTmp[k]->getParameters(*mGG);
-         TIterator* iterMgg = paramsMgg->createIterator();
-         TObject* tempObjMgg=0;
-         while((tempObjMgg=iterMgg->Next())){
+      //set parameters to initial values      
+      RooArgSet* paramsMgg = (RooArgSet*) MggBkgTmp[k]->getParameters(*mGG);
+      TIterator* iterMgg = paramsMgg->createIterator();
+      TObject* tempObjMgg=0;
+      while((tempObjMgg=iterMgg->Next())){
                 RooRealVar* var = (RooRealVar*)tempObjMgg;
                 var->setVal(0.1);
-         }
+                //std::cout << "k = " << k << " , varNameMgg = " << tempObjMgg->GetName() << " , val = " << var->getVal() << std::endl;
+      }
          
-         RooArgSet* paramsMjj = (RooArgSet*) MjjBkgTmp[k]->getParameters(*mJJ);
-          TIterator* iterMjj = paramsMjj->createIterator();
-          TObject* tempObjMjj=0;
-          while((tempObjMjj=iterMjj->Next())){
+      RooArgSet* paramsMjj = (RooArgSet*) MjjBkgTmp[k]->getParameters(*mJJ);
+      TIterator* iterMjj = paramsMjj->createIterator();
+      TObject* tempObjMjj=0;
+      while((tempObjMjj=iterMjj->Next())){
                  RooRealVar* var = (RooRealVar*)tempObjMjj;
                  var->setVal(0.1);
-          }
-
+                 //std::cout << "k = " << k << " , varNameMjj = " << tempObjMjj->GetName() << " , val = " << var->getVal() << std::endl;
       }
+ 
+      p6->setVal(-0.1);
+      p7->setVal(-0.1);
+      p8->setVal(-0.1);
+      p9->setVal(-0.1);
+
+
+      //nEvents = nEvents + nsigTruth.getVal();
       //RooRandom::randomGenerator()->SetSeed(nEvent); 
-      RooDataSet *dataGen = BkgTruth.generate(RooArgSet(*mGG,*mJJ),nEvents,Range("massFit"),Extended(kTRUE));
+      RooDataSet *dataGen = BkgTruth.generate(RooArgSet(*mGG,*mJJ),nEvents,Extended(kTRUE));
       RooFitResult* fitResults = BkgFit.fitTo(*dataGen,Range("massFit"),Save(),SumW2Error(kTRUE)) ; 
 
      /*if(k == 1){
@@ -903,12 +933,14 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       float fitNerr = nsig.getError();
       float fitBkg = nbkg.getVal();
       float fitBkgerr = nbkg.getError();
-      float pull = (0.-fitN)/(fitNerr);
+      //float pull = (nsigTruth.getVal()-fitN)/(fitNerr);
+      float pull = (0-fitN)/(fitNerr);
       float pullBkg = (nEvents-fitBkg)/(fitBkgerr);
-      //std::cout << "TOY = " << i << " , status = " << fitStatus << " , nbkg = " << fitBkg << " , nbkgErr = " << fitBkgerr << " , nsig = " << fitN << " , nsigErr = " << fitNerr << " , corr = " << corr << " , pullSig = "   << pull << " , pullBkg = "   << pullBkg << " , -LogLike = " << fitResults->minNll() << " , nEvents = " << nEvents << " " << data->sumEntries() << std::endl;
+      //std::cout <<  " k = " << k << " , TOY = " << i << " , status = " << fitStatus << " , nbkg = " << fitBkg << " , nbkgErr = " << fitBkgerr << " , nsig = " << fitN << " , nsigErr = " << fitNerr << " , corr = " << corr << " , pullSig = "   << pull << " , pullBkg = "   << pullBkg << " , -LogLike = " << fitResults->minNll() << " , nEvents = " << nEvents << " " << data->sumEntries() << std::endl;
       if(fitNerr == 0. || fitBkgerr== 0.) continue;
       if(fabs(fitResults->minNll()) > 10e6) continue;
       if(fabs(nsig.getVal())> 0.85*nEvents) continue;
+      //if(fabs(nsig.getVal())> 0.85*3*nsigTruth.getVal()) continue;
       if(nbkg.getVal() < 0.5*1.15*nEvents || nbkg.getVal() > 1.5*0.85*nEvents) continue;
       if(fabs(corr)>0.85) continue;
       iCount++;
@@ -954,24 +986,32 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       RooRealVar *q7 = new RooRealVar("q7","",p7->getVal());
       RooRealVar *q8 = new RooRealVar("q8","",p8->getVal());
       RooRealVar *q9 = new RooRealVar("q9","",p9->getVal());
+      RooExponential* expo1Mgg_tmp = new RooExponential("exp1FitMgg_tmp","",*mGG,*q6);
+      RooExponential* expo2Mgg_tmp = new RooExponential("exp2FitMgg_tmp","",*mGG,*q7);
+      RooExponential* expo1Mjj_tmp = new RooExponential("exp1FitMjj_tmp","",*mJJ,*q8);
+      RooExponential* expo2Mjj_tmp = new RooExponential("exp2FitMjj_tmp","",*mJJ,*q9);
+      RooGenericPdf* pow1Mgg_tmp = new RooGenericPdf("pow1FitMgg_tmp","pow(@0,@1)",RooArgList(*mGG,*q6));
+      RooGenericPdf* pow2Mgg_tmp = new RooGenericPdf("pow2FitMgg_tmp","pow(@0,@1)",RooArgList(*mGG,*q7));
+      RooGenericPdf* pow1Mjj_tmp = new RooGenericPdf("pow1FitMjj_tmp","pow(@0,@1)",RooArgList(*mJJ,*q8));
+      RooGenericPdf* pow2Mjj_tmp = new RooGenericPdf("pow2FitMjj_tmp","pow(@0,@1)",RooArgList(*mJJ,*q9));
       RooAbsPdf *fitFuncMgg, *fitFuncMjj;
       switch(k){
-      case 0: fitFuncMgg = new RooExponential("fitFuncMgg","",*mGG,*q8); break;
-      case 1: fitFuncMgg = new RooGenericPdf("fitFuncMgg","pow(@0,@1)",RooArgList(*mGG,*q8)); break;
-      case 2: fitFuncMgg = new RooBernstein("fitFuncMgg","",*mGG,RooArgList(*q0,*q1)); break;
-      case 3: fitFuncMgg = new RooBernstein("fitFuncMgg","",*mGG,RooArgList(*q0,*q1)); break;
+      case 0: fitFuncMgg = new RooExponential("fitFuncMgg","",*mGG,*q6); break;
+      case 1: fitFuncMgg = new RooAddPdf("fitFuncMgg","",RooArgList(*expo1Mgg_tmp,*expo2Mgg_tmp),RooArgList(*q6,*q7)); break;
+      case 2: fitFuncMgg = new RooGenericPdf("fitFuncMgg","pow(@0,@1)",RooArgList(*mGG,*q6)); break;
+      case 3: fitFuncMgg = new RooAddPdf("fitFuncMgg","",RooArgList(*pow1Mgg_tmp,*pow2Mgg_tmp),RooArgList(*q6,*q7)); break;
       case 4: fitFuncMgg = new RooBernstein("fitFuncMgg","",*mGG,RooArgList(*q0,*q1)); break;
       case 5: fitFuncMgg = new RooBernstein("fitFuncMgg","",*mGG,RooArgList(*q0,*q1)); break;
       case 6: fitFuncMgg = new RooBernstein("fitFuncMgg","",*mGG,RooArgList(*q0,*q1,*q2)); break;
       }
       switch(k){
-      case 0: fitFuncMjj = new RooExponential("fitFuncMjj","",*mJJ,*q9); break;
-      case 1: fitFuncMjj = new RooGenericPdf("fitFuncMjj","pow(@0,@1)",RooArgList(*mJJ,*q9)); break;
-      case 2: fitFuncMjj = new RooBernstein("fitFuncMjj","",*mJJ,RooArgList(*q4,*q5)); break;
-      case 3: fitFuncMjj = new RooBernstein("fitFuncMjj","",*mJJ,RooArgList(*q4,*q5,*q6)); break;
-      case 4: fitFuncMjj = new RooBernstein("fitFuncMjj","",*mJJ,RooArgList(*q4,*q5,*q6,*q7)); break;
-      case 5: fitFuncMjj = new RooBernstein("fitFuncMjj","",*mJJ,RooArgList(*q4,*q5,*q6,*q7,*q3)); break;
-      case 6: fitFuncMjj = new RooBernstein("fitFuncMjj","",*mJJ,RooArgList(*q4,*q5)); break;
+      case 0: fitFuncMjj = new RooExponential("fitFuncMjj","",*mJJ,*q8); break;
+      case 1: fitFuncMjj = new RooAddPdf("fitFuncMjj","",RooArgList(*expo1Mjj_tmp,*expo2Mjj_tmp),RooArgList(*q8,*q9)); break;
+      case 2: fitFuncMjj = new RooGenericPdf("fitFuncMjj","pow(@0,@1)",RooArgList(*mJJ,*q8)); break;
+      case 3: fitFuncMjj = new RooAddPdf("fitFuncMjj","",RooArgList(*pow1Mjj_tmp,*pow2Mjj_tmp),RooArgList(*q8,*q9)); break;
+      case 4: fitFuncMjj = new RooBernstein("fitFuncMjj","",*mJJ,RooArgList(*q3,*q4)); break;
+      case 5: fitFuncMjj = new RooBernstein("fitFuncMjj","",*mJJ,RooArgList(*q3,*q4,*q5)); break;
+      case 6: fitFuncMjj = new RooBernstein("fitFuncMjj","",*mJJ,RooArgList(*q3,*q4)); break;
       }
       RooProdPdf *fitFunc= new RooProdPdf("fitFunc","",RooArgSet(*fitFuncMgg,*fitFuncMjj));
       fitFunc->plotOn(frame,LineColor(kGreen),Range("fitrange"),NormRange("fitrange"));
@@ -1030,24 +1070,32 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       RooRealVar *q7 = new RooRealVar("q7","",p7->getVal());
       RooRealVar *q8 = new RooRealVar("q8","",p8->getVal());
       RooRealVar *q9 = new RooRealVar("q9","",p9->getVal());
+      RooExponential* expo1Mgg_tmp = new RooExponential("exp1FitMgg_tmp","",*mGG,*q6);
+      RooExponential* expo2Mgg_tmp = new RooExponential("exp2FitMgg_tmp","",*mGG,*q7);
+      RooExponential* expo1Mjj_tmp = new RooExponential("exp1FitMjj_tmp","",*mJJ,*q8);
+      RooExponential* expo2Mjj_tmp = new RooExponential("exp2FitMjj_tmp","",*mJJ,*q9);
+      RooGenericPdf* pow1Mgg_tmp = new RooGenericPdf("pow1FitMgg_tmp","pow(@0,@1)",RooArgList(*mGG,*q6));
+      RooGenericPdf* pow2Mgg_tmp = new RooGenericPdf("pow2FitMgg_tmp","pow(@0,@1)",RooArgList(*mGG,*q7));
+      RooGenericPdf* pow1Mjj_tmp = new RooGenericPdf("pow1FitMjj_tmp","pow(@0,@1)",RooArgList(*mJJ,*q8));
+      RooGenericPdf* pow2Mjj_tmp = new RooGenericPdf("pow2FitMjj_tmp","pow(@0,@1)",RooArgList(*mJJ,*q9));
       RooAbsPdf *fitFuncMgg, *fitFuncMjj;
       switch(k){
-      case 0: fitFuncMgg = new RooExponential("fitFuncMgg","",*mGG,*q8); break;
-      case 1: fitFuncMgg = new RooGenericPdf("fitFuncMgg","pow(@0,@1)",RooArgList(*mGG,*q8)); break;
-      case 2: fitFuncMgg = new RooBernstein("fitFuncMgg","",*mGG,RooArgList(*q0,*q1)); break;
-      case 3: fitFuncMgg = new RooBernstein("fitFuncMgg","",*mGG,RooArgList(*q0,*q1)); break;
+      case 0: fitFuncMgg = new RooExponential("fitFuncMgg","",*mGG,*q6); break;
+      case 1: fitFuncMgg = new RooAddPdf("fitFuncMgg","",RooArgList(*expo1Mgg_tmp,*expo2Mgg_tmp),RooArgList(*q6,*q7)); break;
+      case 2: fitFuncMgg = new RooGenericPdf("fitFuncMgg","pow(@0,@1)",RooArgList(*mGG,*q6)); break;
+      case 3: fitFuncMgg = new RooAddPdf("fitFuncMgg","",RooArgList(*pow1Mgg_tmp,*pow2Mgg_tmp),RooArgList(*q6,*q7)); break;
       case 4: fitFuncMgg = new RooBernstein("fitFuncMgg","",*mGG,RooArgList(*q0,*q1)); break;
       case 5: fitFuncMgg = new RooBernstein("fitFuncMgg","",*mGG,RooArgList(*q0,*q1)); break;
       case 6: fitFuncMgg = new RooBernstein("fitFuncMgg","",*mGG,RooArgList(*q0,*q1,*q2)); break;
       }
       switch(k){
-      case 0: fitFuncMjj = new RooExponential("fitFuncMjj","",*mJJ,*q9); break;
-      case 1: fitFuncMjj = new RooGenericPdf("fitFuncMjj","pow(@0,@1)",RooArgList(*mJJ,*q9)); break;
-      case 2: fitFuncMjj = new RooBernstein("fitFuncMjj","",*mJJ,RooArgList(*q4,*q5)); break;
-      case 3: fitFuncMjj = new RooBernstein("fitFuncMjj","",*mJJ,RooArgList(*q4,*q5,*q6)); break;
-      case 4: fitFuncMjj = new RooBernstein("fitFuncMjj","",*mJJ,RooArgList(*q4,*q5,*q6,*q7)); break;
-      case 5: fitFuncMjj = new RooBernstein("fitFuncMjj","",*mJJ,RooArgList(*q4,*q5,*q6,*q7,*q3)); break;
-      case 6: fitFuncMjj = new RooBernstein("fitFuncMjj","",*mJJ,RooArgList(*q4,*q5)); break;
+      case 0: fitFuncMjj = new RooExponential("fitFuncMjj","",*mJJ,*q8); break;
+      case 1: fitFuncMjj = new RooAddPdf("fitFuncMjj","",RooArgList(*expo1Mjj_tmp,*expo2Mjj_tmp),RooArgList(*q8,*q9)); break;
+      case 2: fitFuncMjj = new RooGenericPdf("fitFuncMjj","pow(@0,@1)",RooArgList(*mJJ,*q8)); break;
+      case 3: fitFuncMjj = new RooAddPdf("fitFuncMjj","",RooArgList(*pow1Mjj_tmp,*pow2Mjj_tmp),RooArgList(*q8,*q9)); break;
+      case 4: fitFuncMjj = new RooBernstein("fitFuncMjj","",*mJJ,RooArgList(*q3,*q4)); break;
+      case 5: fitFuncMjj = new RooBernstein("fitFuncMjj","",*mJJ,RooArgList(*q3,*q4,*q5)); break;
+      case 6: fitFuncMjj = new RooBernstein("fitFuncMjj","",*mJJ,RooArgList(*q3,*q4)); break;
       }
       RooProdPdf*fitFunc= new RooProdPdf("fitFunc","",RooArgSet(*fitFuncMgg,*fitFuncMjj));
       fitFunc->plotOn(frame,LineColor(kGreen),Range("fitrange"),NormRange("fitrange"));
