@@ -70,6 +70,11 @@ Int_t NCAT;
 TString inDir;
 Int_t resMass;
 bool withCorr;
+RooAbsPdf* BkgMggModelFitNoCorr;
+int NDOFMgg_noCorr;
+int NDOFMgg;
+int NDOFMjj;
+
 
 
 void AddBkgData(RooWorkspace*, int);
@@ -88,6 +93,8 @@ RooArgSet* defineVariables()
   // define variables of the input ntuple
   RooRealVar* mJJ  = new RooRealVar("mjj","M(jj)",60,180,"GeV");
   RooRealVar* mGG  = new RooRealVar("mgg","M(#gamma#gamma)",100,180,"GeV");
+  if(resMass == 270) mGG->setRange(100,155);
+  else if (resMass == 300) mGG->setRange(100,175);
   RooRealVar* mRad = new RooRealVar("mtot","M(#gamma#gamma jj)",0,1500,"GeV");
   RooRealVar* wei  = new RooRealVar("evWeight","event weight",0,100,"");
   RooCategory* bJetTagCategory = new RooCategory("cut_based_ct","event category 4") ;
@@ -113,7 +120,7 @@ void runfits(int cat=0, int modelNumMgg=0, int modelNumMjj=0, int inDirNum=0)
   style();
 
   //TString card_name("hgghbb_models_Pol_8TeV.rs");
-  TString card_name("/afs/cern.ch/work/b/bmarzocc/BiasStudies/CMSSW_7_4_0/src/biasStudies/models_2D.rs");
+  TString card_name("/afs/cern.ch/work/b/bmarzocc/BiasStudies/CMSSW_7_4_0/src/biasStudies/models_2D_correlation.rs");
   HLFactory hlf("HLFactory", card_name, false);
   RooWorkspace* w = hlf.GetWs();
   AddBkgData(w,cat);
@@ -308,11 +315,15 @@ RooAbsPdf *BkgMggModelFit(RooWorkspace* w, int c, int modelNum) {
   RooPlot* plotMggBkg[9];
 
   Float_t minMassFit(100),maxMassFit(180); 
+  if(resMass == 270) maxMassFit = 155;
+  if(resMass == 300) maxMassFit = 175;
 
   RooRealVar* mGG     = w->var("mgg");
   mGG->setUnit("GeV");
   RooRealVar* mJJ     = w->var("mjj");
   mJJ->setUnit("GeV");
+
+  mGG->setRange("fitrange",minMassFit,maxMassFit);
   
   TLatex *text = new TLatex();
   text->SetNDC();
@@ -486,84 +497,182 @@ RooAbsPdf *BkgMggModelFit(RooWorkspace* w, int c, int modelNum) {
 
   //redo the fit since parameters are used across multiple truth models
   MggBkgTmp[bestN]->fitTo(*data[c], Strategy(1),Minos(kFALSE), Range(minMassFit,maxMassFit),SumW2Error(kTRUE), Save(kTRUE));//strategy 1 or 2?
+  BkgMggModelFitNoCorr = MggBkgTmp[bestN];
+  NDOFMgg_noCorr = NDOF[bestN];
 
-  RooRealVar* param0[10];
-  RooRealVar* param1[10];
-  for(int ii = 0; ii < 10; ii++){
-    param0[ii] = new RooRealVar(TString::Format("param0_%d",ii),"",0.,-100.,100.);
-    param1[ii] = new RooRealVar(TString::Format("param1_%d",ii),"",0.1,-100.,100.);
-  }
-
-  RooRealVar* parCond[10];
-  for(int ii = 0; ii < 10; ii++){
+  /*RooRealVar* parCond[5];
+  for(int ii = 0; ii < 5; ii++){
     parCond[ii] = new RooRealVar(TString::Format("parCond_%d",ii),"",0.1,-10.,10.);
   }
-  RooRealVar* pol0 = new RooRealVar("pol0","",0.,-10.,10.);
-  RooRealVar* pol1 = new RooRealVar("pol1","",0.1,-1.,1.);
-
-  RooArgList arglist(*mGG,*mJJ,*pol0,*pol1);
+  RooRealVar* argCond[5];
+  for(int ii = 0; ii < 5; ii++){
+    argCond[ii] = new RooRealVar(TString::Format("argCond_%d",ii),"",-0.1,-10.,0.);
+  }
+  RooRealVar* corr = new RooRealVar("corr","",0.001,-1.,1.);
+  RooRealVar* corrBern = new RooRealVar("corrBern","",0.1,-1.,1.);
+  RooRealVar* corrPow = new RooRealVar("corrPow","",-0.001,-1.,1.);
+  
+  RooArgList arglist(*mGG,*mJJ,*corrBern);
   switch (modelNum){
 
   case 0: //Bernstein
       arglist.add(*parCond[0]);
-      MggBkgTmp[0] = new RooGenericPdf("BerN0Mgg", "(@2+@1*@3)*@4", arglist);
+      MggBkgTmp[0] = new RooGenericPdf("BerN0Mgg", "(@3+@1*@2)", arglist);
       arglist.add(*parCond[1]);
-      MggBkgTmp[1] = new RooGenericPdf("BerN1Mgg", "(@2+@1*@3)*@4*(1-@0)+(@2+@1*@3)*@5*(@0)",arglist);
+      MggBkgTmp[1] = new RooGenericPdf("BerN1Mgg", "(@3+@1*@2)*(1-@0)+(@4+@1*@2)*(@0)",arglist);
       arglist.add(*parCond[2]);
-      MggBkgTmp[2] = new RooGenericPdf("BerN2Mgg", "(@2+@1*@3)*@4*(1-@0)**2+(@2+@1*@3)*@5*2*(@0)*(1-@0)+(@2+@1*@3)*@6*(@0)**2",arglist); 
+      MggBkgTmp[2] = new RooGenericPdf("BerN2Mgg", "(@3+@1*@2)*(1-@0)**2+(@4+@1*@2)*2*(@0)*(1-@0)+(@5+@1*@2)*(@0)**2",arglist); 
       arglist.add(*parCond[3]);
-      MggBkgTmp[3] = new RooGenericPdf("BerN3Mgg", "(@2+@1*@3)*@4*(1-@0)**3+(@2+@1*@3)*@5*3*(@0)*(1-@0)**2+(@2+@1*@3)*@6*3*(@0)**2*(1-@0)+(@2+@1*@3)*@7*(@0)**3",arglist);
+      MggBkgTmp[3] = new RooGenericPdf("BerN3Mgg", "(@3+@1*@2)*(1-@0)**3+(@4+@1*@2)*3*(@0)*(1-@0)**2+(@5+@1*@2)*3*(@0)**2*(1-@0)+(@6+@1*@2)*(@0)**3",arglist);
       arglist.add(*parCond[4]);
-      MggBkgTmp[4] = new RooGenericPdf("BerN4Mgg", "(@2+@1*@3)*@4*(1-@0)**4+(@2+@1*@3)*@5*4*(@0)*(1-@0)**3+(@2+@1*@3)*@6*6*(@0)**2*(1-@0)**2+(@2+@1*@3)*@7*4*(@0)**3*(1-@0)+(@2+@1*@3)*@8**4",arglist);
+      MggBkgTmp[4] = new RooGenericPdf("BerN4Mgg", "(@3+@1*@2)*(1-@0)**4+(@4+@1*@2)*4*(@0)*(1-@0)**3+(@5+@1*@2)*6*(@0)**2*(1-@0)**2+(@6+@1*@2)*4*(@0)**3*(1-@0)+(@7+@1*@2)*@0**4",arglist);
   break;
 
   arglist.Clear();
   arglist.add(*mGG);
   arglist.add(*mJJ);
-  arglist.add(*pol0);
-  arglist.add(*pol1);
+  arglist.add(*corr);
   case 1: //Exponential
+      arglist.add(*argCond[0]);
       arglist.add(*parCond[0]);
+      MggBkgTmp[0] = new RooGenericPdf("ExpN1Mgg", "@4*exp((@3+@1*@2)*@0*0.0001)",arglist);
+      arglist.add(*argCond[1]);
       arglist.add(*parCond[1]);
-      MggBkgTmp[0] = new RooGenericPdf("ExpN1Mgg", "@5*exp(@4*(@2+@1*@3)*@0)",arglist);
+      MggBkgTmp[1] = new RooGenericPdf("ExpN2Mgg", "@4*exp((@3+@1*@2)*@0*0.0001)+@6*exp((@5+@1*@2)*@0*0.0001)", arglist);
+      arglist.add(*argCond[2]);
       arglist.add(*parCond[2]);
+      MggBkgTmp[2] = new RooGenericPdf("ExpN3Mgg", "@4*exp((@3+@1*@2)*@0*0.0001)+@6*exp((@5+@1*@2)*@0*0.0001)+@8*exp((@7+@1*@2)*@0*0.0001)", arglist);
+      arglist.add(*argCond[3]);
       arglist.add(*parCond[3]);
-      MggBkgTmp[1] = new RooGenericPdf("ExpN2Mgg", "@5*exp(@4*(@2+@1*@3)*@0)+@7*exp(@6*(@2+@1*@3)*@0)", arglist);
+      MggBkgTmp[3] = new RooGenericPdf("ExpN4Mgg", "@4*exp((@3+@1*@2)*@0*0.0001)+@6*exp((@5+@1*@2)*@0*0.0001)+@8*exp((@7+@1*@2)*@0*0.0001)+@10*exp((@9+@1*@2)*@0*0.0001)", arglist);
+      arglist.add(*argCond[4]);
       arglist.add(*parCond[4]);
-      arglist.add(*parCond[5]);
-      MggBkgTmp[2] = new RooGenericPdf("ExpN3Mgg", "@5*exp(@4*(@2+@1*@3)*@0)+@7*exp(@6*(@2+@1*@3)*@0)+@9*exp(@8*(@2+@1*@3)*@0)", arglist);
-      arglist.add(*parCond[6]);
-      arglist.add(*parCond[7]);
-      MggBkgTmp[3] = new RooGenericPdf("ExpN4Mgg", "@5*exp(@4*(@2+@1*@3)*@0)+@7*exp(@6*(@2+@1*@3)*@0)+@9*exp(@8*(@2+@1*@3)*@0)+@11*exp(@10*(@2+@1*@3)*@0)", arglist);
-      arglist.add(*parCond[8]);
-      arglist.add(*parCond[9]);
-      MggBkgTmp[4] = new RooGenericPdf("ExpN5Mgg", "@5*exp(@4*(@2+@1*@3)*@0)+@7*exp(@6*(@2+@1*@3)*@0)+@9*exp(@8*(@2+@1*@3)*@0)+@11*exp(@10*(@2+@1*@3)*@0)+@13*exp(@12*(@2+@1*@3)*@0)", arglist);
-      break;
+      MggBkgTmp[4] = new RooGenericPdf("ExpN5Mgg", "@4*exp((@3+@1*@2)*@0*0.0001)+@6*exp((@5+@1*@2)*@0*0.0001)+@8*exp((@7+@1*@2)*@0*0.0001)+@10*exp((@9+@1*@2)*@0*0.0001)+@12*exp((@11+@1*@2)*@0*0.0001)", arglist);
+  break;
 
   arglist.Clear();
   arglist.add(*mGG);
   arglist.add(*mJJ);
-  arglist.add(*pol0);
-  arglist.add(*pol1);
+  arglist.add(*corrPow);
   case 4: //Power
+      arglist.add(*argCond[0]);
       arglist.add(*parCond[0]);
+      MggBkgTmp[0] = new RooGenericPdf("PowN1Mgg", "@4*pow(@0,(@3+@1*@2)*0.0001)",arglist);
+      arglist.add(*argCond[1]);
       arglist.add(*parCond[1]);
-      MggBkgTmp[0] = new RooGenericPdf("PowN1Mgg", "@5*pow(@0,@4*(@2+@1*@3))",arglist);
+      MggBkgTmp[1] = new RooGenericPdf("PowN2Mgg", "@4*pow(@0,(@3+@1*@2)*0.0001)+@6*pow(@0,(@5+@1*@2)*0.0001)", arglist);
+      arglist.add(*argCond[2]);
       arglist.add(*parCond[2]);
+      MggBkgTmp[2] = new RooGenericPdf("PowN3Mgg", "@4*pow(@0,(@3+@1*@2)*0.0001)+@6*pow(@0,(@5+@1*@2)*0.0001)+@8*pow(@0,(@7+@1*@2)*0.0001)", arglist);
+      arglist.add(*argCond[3]);
       arglist.add(*parCond[3]);
-      MggBkgTmp[1] = new RooGenericPdf("PowN2Mgg", "@5*pow(@0,@4*(@2+@1*@3))+@7*pow(@0,@6*(@2+@1*@3))", arglist);
+      MggBkgTmp[3] = new RooGenericPdf("PowN4Mgg", "@4*pow(@0,(@3+@1*@2)*0.0001)+@6*pow(@0,(@5+@1*@2)*0.0001)+@8*pow(@0,(@7+@1*@2)*0.0001)+@10*pow(@0,(@9+@1*@2)*0.0001)", arglist);
+      arglist.add(*argCond[4]);
       arglist.add(*parCond[4]);
-      arglist.add(*parCond[5]);
-      MggBkgTmp[2] = new RooGenericPdf("PowN3Mgg", "@5*pow(@0,@4*(@2+@1*@3))+@7*pow(@0,@6*(@2+@1*@3))+@9*pow(@0,@8*(@2+@1*@3))", arglist);
-      arglist.add(*parCond[6]);
-      arglist.add(*parCond[7]);
-      MggBkgTmp[3] = new RooGenericPdf("PowN4Mgg", "@5*pow(@0,@4*(@2+@1*@3))+@7*pow(@0,@6*(@2+@1*@3))+@9*pow(@0,@8*(@2+@1*@3))+@11*pow(@0,@10*(@2+@1*@3))", arglist);
-      arglist.add(*parCond[8]);
-      arglist.add(*parCond[9]);
-      MggBkgTmp[4] = new RooGenericPdf("PowN5Mgg", "@5*pow(@0,@4*(@2+@1*@3))+@7*pow(@0,@6*(@2+@1*@3))+@9*pow(@0,@8*(@2+@1*@3))+@11*pow(@0,@10*(@2+@1*@3))+@13*pow(@0,@12*(@2+@1*@3))", arglist);
+      MggBkgTmp[4] = new RooGenericPdf("PowN5Mgg", "@4*pow(@0,(@3+@1*@2)*0.0001)+@6*pow(@0,(@5+@1*@2)*0.0001)+@8*pow(@0,(@7+@1*@2)*0.0001)+@10*pow(@0,(@9+@1*@2)*0.0001)+@12*pow(@0,(@11+@1*@2)*0.0001)", arglist);
+  break;
+  }*/
+  
+  RooRealVar* parCondBern[10];
+  for(int ii = 0; ii < 10; ii++){
+    parCondBern[ii] = new RooRealVar(TString::Format("parCondBern_%d",ii),"",0.1,-100.,100.);
+  }
+  RooRealVar* parCond[5];
+  for(int ii = 0; ii < 5; ii++){
+    parCond[ii] = new RooRealVar(TString::Format("parCond_%d",ii),"",0.1,-10.,10.);
+  }
+  RooRealVar* argCond[5];
+  for(int ii = 0; ii < 5; ii++){
+    argCond[ii] = new RooRealVar(TString::Format("argCond_%d",ii),"",-0.1,-10.,0.);
+  }
+  RooRealVar* corrCond[5];
+  for(int ii = 0; ii < 5; ii++){
+    corrCond[ii] = new RooRealVar(TString::Format("corrCond_%d",ii),"",0.001,-1.,1.);
+  }
+  
+  RooArgList arglist(*mGG,*mJJ);
+  switch (modelNum){
+
+  case 0: //Bernstein
+      arglist.add(*parCondBern[0]);
+      arglist.add(*parCondBern[1]);
+      MggBkgTmp[0] = new RooGenericPdf("BerN0Mgg", "(@3+@1*@2)", arglist);
+      arglist.add(*parCondBern[2]);
+      arglist.add(*parCondBern[3]);
+      MggBkgTmp[1] = new RooGenericPdf("BerN1Mgg", "(@3+@1*@2)*(1-@0)+(@5+@1*@4)*(@0)",arglist);
+      arglist.add(*parCondBern[4]);
+      arglist.add(*parCondBern[5]);
+      MggBkgTmp[2] = new RooGenericPdf("BerN2Mgg", "(@3+@1*@2)*(1-@0)**2+(@5+@1*@4)*2*(@0)*(1-@0)+(@7+@1*@6)*(@0)**2",arglist); 
+      arglist.add(*parCondBern[6]);
+      arglist.add(*parCondBern[7]);
+      MggBkgTmp[3] = new RooGenericPdf("BerN3Mgg", "(@3+@1*@2)*(1-@0)**3+(@5+@1*@4)*3*(@0)*(1-@0)**2+(@7+@1*@6)*3*(@0)**2*(1-@0)+(@9+@1*@8)*(@0)**3",arglist);
+      arglist.add(*parCondBern[8]);
+      arglist.add(*parCondBern[9]);
+      MggBkgTmp[4] = new RooGenericPdf("BerN4Mgg", "(@3+@1*@2)*(1-@0)**4+(@5+@1*@4)*4*(@0)*(1-@0)**3+(@7+@1*@6)*6*(@0)**2*(1-@0)**2+(@9+@1*@8)*4*(@0)**3*(1-@0)+(@11+@1*@10)*@0**4",arglist);
+  break;
+
+  arglist.Clear();
+  arglist.add(*mGG);
+  arglist.add(*mJJ);
+  case 1: //Exponential
+      arglist.add(*corrCond[0]);
+      arglist.add(*argCond[0]);
+      arglist.add(*parCond[0]);
+      MggBkgTmp[0] = new RooGenericPdf("ExpN1Mgg", "@4*exp((@3+@1*@2)*@0*0.0001)",arglist);
+      arglist.add(*corrCond[1]);
+      arglist.add(*argCond[1]);
+      arglist.add(*parCond[1]);
+      MggBkgTmp[1] = new RooGenericPdf("ExpN2Mgg", "@4*exp((@3+@1*@2)*@0*0.0001)+@7*exp((@6+@1*@5)*@0*0.0001)", arglist);
+      arglist.add(*corrCond[2]);
+      arglist.add(*argCond[2]);
+      arglist.add(*parCond[2]);
+      MggBkgTmp[2] = new RooGenericPdf("ExpN3Mgg", "@4*exp((@3+@1*@2)*@0*0.0001)+@7*exp((@6+@1*@5)*@0*0.0001)+@10*exp((@9+@1*@8)*@0*0.0001)", arglist);
+      arglist.add(*corrCond[3]);
+      arglist.add(*argCond[3]);
+      arglist.add(*parCond[3]);
+      MggBkgTmp[3] = new RooGenericPdf("ExpN4Mgg", "@4*exp((@3+@1*@2)*@0*0.0001)+@7*exp((@6+@1*@5)*@0*0.0001)+@10*exp((@9+@1*@8)*@0*0.0001)+@13*exp((@12+@1*@11)*@0*0.0001)", arglist);
+      arglist.add(*corrCond[4]);
+      arglist.add(*argCond[4]);
+      arglist.add(*parCond[4]);
+      MggBkgTmp[4] = new RooGenericPdf("ExpN5Mgg", "@4*exp((@3+@1*@2)*@0*0.0001)+@7*exp((@6+@1*@5)*@0*0.0001)+@10*exp((@9+@1*@8)*@0*0.0001)+@13*exp((@12+@1*@11)*@0*0.0001)+@16*exp((@15+@1*@14)*@0*0.0001)", arglist);
+  break;
+
+  arglist.Clear();
+  arglist.add(*mGG);
+  arglist.add(*mJJ);
+  case 4: //Power
+      arglist.add(*corrCond[0]);
+      arglist.add(*argCond[0]);
+      arglist.add(*parCond[0]);
+      MggBkgTmp[0] = new RooGenericPdf("PowN1Mgg", "@4*exp((@3+@1*@2)*log(@)*0.0001)",arglist);
+      arglist.add(*corrCond[1]);
+      arglist.add(*argCond[1]);
+      arglist.add(*parCond[1]);
+      MggBkgTmp[1] = new RooGenericPdf("PowN2Mgg", "@4*exp((@3+@1*@2)*log(@)*0.0001)+@7*exp((@6+@1*@5)*log(@)*0.0001)", arglist);
+      arglist.add(*corrCond[2]);
+      arglist.add(*argCond[2]);
+      arglist.add(*parCond[2]);
+      MggBkgTmp[2] = new RooGenericPdf("PowN3Mgg", "@4*exp((@3+@1*@2)*log(@)*0.0001)+@7*exp((@6+@1*@5)*log(@)*0.0001)+@10*exp((@9+@1*@8)*log(@)*0.0001)", arglist);
+      arglist.add(*corrCond[3]);
+      arglist.add(*argCond[3]);
+      arglist.add(*parCond[3]);
+      MggBkgTmp[3] = new RooGenericPdf("PowN4Mgg", "@4*exp((@3+@1*@2)*log(@)*0.0001)+@7*exp((@6+@1*@5)*log(@)*0.0001)+@10*exp((@9+@1*@8)*log(@)*0.0001)+@13*exp((@12+@1*@11)*log(@)*0.0001)", arglist);
+      arglist.add(*corrCond[4]);
+      arglist.add(*argCond[4]);
+      arglist.add(*parCond[4]);
+      MggBkgTmp[4] = new RooGenericPdf("PowN5Mgg", "@4*exp((@3+@1*@2)*log(@)*0.0001)+@7*exp((@6+@1*@5)*log(@)*0.0001)+@10*exp((@9+@1*@8)*log(@)*0.0001)+@13*exp((@12+@1*@11)*log(@)*0.0001)+@16*exp((@15+@1*@14)*log(@)*0.0001)", arglist);
   break;
   }
   
+  for(int i = 0; i < totalNDOF; i++)
+  {
+    switch(modelNum){
+    case 0: NDOF[i] = 2*(i+1); break;
+    case 1: NDOF[i] = 3*(i+1); break;
+    case 4: NDOF[i] = 3*(i+1); break;
+    }
+  }
+  NDOFMgg = NDOF[bestN];
   //w->import(*MggBkgTmp[bestN]);
 
   return MggBkgTmp[bestN];
@@ -583,10 +692,12 @@ RooAbsPdf *BkgMjjModelFit(RooWorkspace* w, int c, int modelNum) {
   RooFitResult* fitresult[9];;
   RooPlot* plotMjjBkg[9];
 
-  Float_t minMassFit(75),maxMassFit(180); 
+  Float_t minMassFit(60),maxMassFit(180); 
+  if(resMass == 0) minMassFit = 75;
 
   RooRealVar* mJJ     = w->var("mjj");
   mJJ->setUnit("GeV");
+  mJJ->setRange("fitrange",minMassFit,maxMassFit); 
   
   TLatex *text = new TLatex();
   text->SetNDC();
@@ -758,6 +869,7 @@ RooAbsPdf *BkgMjjModelFit(RooWorkspace* w, int c, int modelNum) {
 
   MjjBkgTmp[bestN]->fitTo(*data[c], Strategy(1),Minos(kFALSE), Range(minMassFit,maxMassFit),SumW2Error(kTRUE), Save(kTRUE));//strategy 1 or 2?
   w->import(*MjjBkgTmp[bestN]);
+  NDOFMjj = NDOF[bestN];
 
   return MjjBkgTmp[bestN];
 
@@ -774,7 +886,10 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
   catdesc.push_back("#scale[0.8]{cat3}");
 
   Float_t minMggMassFit(100),maxMggMassFit(180); 
-  Float_t minMjjMassFit(75),maxMjjMassFit(180); 
+  Float_t minMjjMassFit(60),maxMjjMassFit(180); 
+  if(resMass == 270) maxMggMassFit = 155;
+  if(resMass == 300) maxMggMassFit = 175;
+  if(resMass == 0) minMjjMassFit = 75; 
   float sigMeanMgg=0, sigFWHM_Mgg=0, sigMeanMjj=0, sigFWHM_Mjj=0;
   switch(c){
   case 0: case 2: sigMeanMgg=124.81; sigFWHM_Mgg=1.76; sigMeanMjj=122.20; sigFWHM_Mjj=22.43; break;
@@ -800,10 +915,10 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
   RooFormulaVar *p3 = new RooFormulaVar("p3","","@0*@0",*w->var(TString::Format("mjj_bkg_8TeV_slope1_cat%d",c)));
   RooFormulaVar *p4 = new RooFormulaVar("p4","","@0*@0",*w->var(TString::Format("mjj_bkg_8TeV_slope2_cat%d",c)));
   RooFormulaVar *p5 = new RooFormulaVar("p5","","@0*@0",*w->var(TString::Format("mjj_bkg_8TeV_slope3_cat%d",c)));
-  RooRealVar *p6 = new RooRealVar("p6","",-0.1,-10.0,1.0);
-  RooRealVar *p7 = new RooRealVar("p7","",-0.1,-10.0,1.0);
-  RooRealVar *p8 = new RooRealVar("p8","",-0.1,-10.0,1.0);
-  RooRealVar *p9 = new RooRealVar("p9","",-0.1,-10.0,1.0);
+  RooRealVar *p6 = new RooRealVar("p6","",-0.1,-10.,0.);
+  RooRealVar *p7 = new RooRealVar("p7","",-0.1,-10.,0.);
+  RooRealVar *p8 = new RooRealVar("p8","",-0.1,-10.,0.);
+  RooRealVar *p9 = new RooRealVar("p9","",-0.1,-10.,0.);
 
   RooExponential* expo1FitMgg = new RooExponential("exp1FitMgg","",*mGG,*p6);
   RooExponential* expo2FitMgg = new RooExponential("exp2FitMgg","",*mGG,*p7);
@@ -850,17 +965,46 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
   if(resMass == 300){
      mGG->setRange("massFit",100,175);
   }
+  if(resMass == 0){
+     mJJ->setRange("massFit",75,180);
+  }
 
+  std::cout << "Fit without correlation!" << std::endl;
+  RooProdPdf* BkgTruthTmp = new RooProdPdf("BkgTruthTmp","",RooArgList(*BkgMggModelFitNoCorr,*MjjBkgTruth));
+  RooRealVar* nbkgTruth = new RooRealVar("nbkgTruth","",data->sumEntries());
+  RooExtendPdf* BkgTruth = new RooExtendPdf("BkgTruth","",*BkgTruthTmp,*nbkgTruth);
+  RooFitResult* fitResultTruth = BkgTruth->fitTo(*data, Strategy(1),Minos(kFALSE), Range("massFit"),SumW2Error(kTRUE), Save(kTRUE));//strategy 1 or 2?
+  w->import(*BkgTruth);
+  float minNLL_noCorr = fitResultTruth->minNll();
 
-  std::cout << "CONDITIONAL! " << std::endl;
-  RooProdPdf* BkgTruthCond = new RooProdPdf("MggBkgTruthCond","",*MjjBkgTruth, Conditional(*MggBkgTruth,*mGG));
-  std::cout << "CONDITIONAL 2! " << std::endl;
-  BkgTruthCond->fitTo(*data, Strategy(1),Minos(kFALSE), Range("massFit"),SumW2Error(kTRUE), Save(kTRUE));//strategy 1 or 2?
-  std::cout << "CONDITIONAL 3! " << std::endl;
+  std::cout << "Fit with correlation!" << std::endl;
+  RooProdPdf* BkgTruthCondtmp = new RooProdPdf("MggBkgTruthCondtmp","",*MjjBkgTruth, Conditional(*MggBkgTruth,*mGG));
+  RooRealVar* nbkgTruthCond = new RooRealVar("nbkgTruthCond","",data->sumEntries());
+  RooExtendPdf* BkgTruthCond = new RooExtendPdf("BkgTruthCond","",*BkgTruthCondtmp,*nbkgTruthCond);
+  RooFitResult* fitResultTruthCorr = BkgTruthCond->fitTo(*data, Strategy(1),Minos(kFALSE), Range("massFit"),SumW2Error(kTRUE), Save(kTRUE));//strategy 1 or 2?
   w->import(*BkgTruthCond);
+  float minNLL_Corr = fitResultTruthCorr->minNll();
+
+  bool noCorr = false;
+  float chi2 = 2*(minNLL_noCorr-minNLL_Corr);
+  std::cout << "chi2 = " << chi2 << std::endl;
+  int chi2dof = NDOFMgg-NDOFMgg_noCorr;
+  std::cout << "chi2dof = " << chi2dof << std::endl;
+  float chi2prob = chi2<0 ? 1.0 : TMath::Prob(chi2,chi2dof);
+  if(chi2prob>0.05 ) noCorr=true;
+  if(data->sumEntries()-1<=(NDOFMjj+NDOFMgg+1)) noCorr=true;
+
+  std::cout << "noCorr = " << noCorr << " , chi2/chi2dof = " << chi2/chi2dof << std::endl;
 
   for(int k=0; k<totalNDOF; ++k){
       //for(int k=0; k<1; ++k){
+
+    if(noCorr == 1) continue;
+
+    if(resMass == 0 && c == 0 && k != 0) continue; 
+    if(resMass == 0 && c == 1 && k != 2) continue; 
+    if(resMass == 0 && c == 2 && k != 0) continue; 
+    if(resMass == 0 && c == 3 && k != 2) continue; 
 
     TCanvas *c1 = new TCanvas("c1","c1",1200,1200);
     c1->Divide(3,3);
@@ -883,11 +1027,11 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       float nEvents = rndm.Poisson(data->sumEntries());
       if(nEvents == 0) continue;
 
-      RooProdPdf BkgTruthTmp("BkgTruthTmp","",*BkgTruthCond);
+      /*RooProdPdf BkgTruthTmp("BkgTruthTmp","",*BkgTruthCondtmp);
       RooRealVar nbkgTruth("nbkgTruth","",nEvents);
       RooExtendPdf BkgTruth("BkgTruth","",BkgTruthTmp,nbkgTruth);
       //RooRealVar nsigTruth("nsigTruth","",0.);
-      //RooAddPdf BkgTruth("BkgTruth", "", RooArgList(BkgTruthTmp,*w->pdf(TString::Format("SigPdf_cat%d",c))), RooArgList(nbkgTruth,nsigTruth));
+      //RooAddPdf BkgTruth("BkgTruth", "", RooArgList(BkgTruthTmp,*w->pdf(TString::Format("SigPdf_cat%d",c))), RooArgList(nbkgTruth,nsigTruth));*/
 
       RooProdPdf BkgFitTmp("BkgFitTmp","",RooArgList(*MggBkgTmp[k],*MjjBkgTmp[k]));
       RooRealVar nbkg("nbkg","",nEvents,0.5*nEvents,1.5*nEvents);
@@ -924,7 +1068,8 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
 
       //nEvents = nEvents + nsigTruth.getVal();
       //RooRandom::randomGenerator()->SetSeed(nEvent); 
-      RooDataSet *dataGen = BkgTruth.generate(RooArgSet(*mGG,*mJJ),nEvents,Range("massFit"),Extended(kTRUE));
+      //RooDataSet *dataGen = BkgTruth.generate(RooArgSet(*mGG,*mJJ),nEvents,Range("massFit"),Extended(kTRUE));
+      RooDataSet *dataGen = BkgTruthCond->generate(RooArgSet(*mGG,*mJJ),nEvents,Range("massFit"),Extended(kTRUE));
       RooFitResult* fitResults = BkgFit.fitTo(*dataGen,Range("massFit"),Save(),SumW2Error(kTRUE)) ; 
 
      /*if(k == 1){
@@ -942,7 +1087,7 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       //float pull = (nsigTruth.getVal()-fitN)/(fitNerr);
       float pull = (0-fitN)/(fitNerr);
       float pullBkg = (nEvents-fitBkg)/(fitBkgerr);
-      std::cout <<  " k = " << k << " , TOY = " << i << " , status = " << fitStatus << " , nbkg = " << fitBkg << " , nbkgErr = " << fitBkgerr << " , nsig = " << fitN << " , nsigErr = " << fitNerr << " , corr = " << corr << " , pullSig = "   << pull << " , pullBkg = "   << pullBkg << " , -LogLike = " << fitResults->minNll() << " , nEvents = " << nEvents << " " << data->sumEntries() << std::endl;
+      //std::cout <<  " k = " << k << " , TOY = " << i << " , status = " << fitStatus << " , nbkg = " << fitBkg << " , nbkgErr = " << fitBkgerr << " , nsig = " << fitN << " , nsigErr = " << fitNerr << " , corr = " << corr << " , pullSig = "   << pull << " , pullBkg = "   << pullBkg << " , -LogLike = " << fitResults->minNll() << " , nEvents = " << nEvents << " " << data->sumEntries() << std::endl;
       if(fitNerr == 0. || fitBkgerr== 0.) continue;
       if(fabs(fitResults->minNll()) > 10e6) continue;
       if(fabs(nsig.getVal())> 0.85*nEvents) continue;
@@ -956,7 +1101,6 @@ void BkgModelBias(RooWorkspace* w,int c,RooAbsPdf* MggBkgTruth, RooAbsPdf* MjjBk
       minNLogL.push_back(fitResults->minNll());
       if(k == 1)powMgg.push_back(p8->getVal());
       if(k == 1)powMjj.push_back(p9->getVal());
-      //std::cout << "TOY = " << i << " , status = " << fitStatus << " , nbkg = " << fitBkg << " , nbkgErr = " << fitBkgerr << " , nsig = " << fitN << " , nsigErr = " << fitNerr << " , corr = " << corr << " , pullSig = "   << pull << " , pullBkg = "   << pullBkg << " , -LogLike = " << fitResults->minNll() << " , nEvents = " << data->sumEntries() << std::endl;
       if(iCount > 0 && iCount <= 9){
       c1->cd(iCount);
       RooPlot *frame = mGG->frame();
